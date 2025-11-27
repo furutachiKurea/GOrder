@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package orderpb;
+
+option go_package = "github.com/furum/furumarketplace/internal/commom/genproto/orderpb";
+
+import "google/protobuf/empty.proto";
+
+service OrderService {
+    rpc CreateOrder (CreateOrderRequest) returns (google.protobuf.Empty);
+    rpc GetOrder (GetOrderRequest) returns (Order);
+    rpc UpdateOrder(Order) returns (google.protobuf.Empty);
+}
+
+message CreateOrderRequest {
+    string customer_id = 1;
+    repeated ItemWithQuantity items = 2;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+  string customer_id = 2;
+}
+
+message ItemWithQuantity {
+    string id = 1;
+    int32 quantity = 2;
+}
+
+message Order {
+  string ID = 1;
+  string customer_id = 2;
+  string status = 3;
+  repeated Item items = 4;
+}
+
+message Item {
+  string id = 1;
+  int32 name = 2;
+  int32 quantity = 3;
+  string price_id = 4;
+}

@@ -21,3 +21,10 @@
 
 # ...even if they are in subdirectories
 !*/
+
+!*.yaml
+!*.yml
+!*.toml
+!*.proto
+!*.sh
+!Makefile
