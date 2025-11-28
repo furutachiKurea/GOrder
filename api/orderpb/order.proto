@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package orderpb;
 
-option go_package = "github.com/furum/furumarketplace/internal/commom/genproto/orderpb";
+option go_package = "github.com/furutachiKurea/gorder/internal/common/genproto/orderpb";
 
 import "google/protobuf/empty.proto";
 
