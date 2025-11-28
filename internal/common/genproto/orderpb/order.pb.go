@@ -249,7 +249,7 @@ func (x *Order) GetItems() []*Item {
 type Item struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          int32                  `protobuf:"varint,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Quantity      int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	PriceId       string                 `protobuf:"bytes,4,opt,name=price_id,json=priceId,proto3" json:"price_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -293,11 +293,11 @@ func (x *Item) GetId() string {
 	return ""
 }
 
-func (x *Item) GetName() int32 {
+func (x *Item) GetName() string {
 	if x != nil {
 		return x.Name
 	}
-	return 0
+	return ""
 }
 
 func (x *Item) GetQuantity() int32 {
@@ -338,7 +338,7 @@ const file_orderpb_order_proto_rawDesc = "" +
 	"\x05items\x18\x04 \x03(\v2\r.orderpb.ItemR\x05items\"a\n" +
 	"\x04Item\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\x05R\x04name\x12\x1a\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\bquantity\x18\x03 \x01(\x05R\bquantity\x12\x19\n" +
 	"\bprice_id\x18\x04 \x01(\tR\apriceId2\xbf\x01\n" +
 	"\fOrderService\x12B\n" +
