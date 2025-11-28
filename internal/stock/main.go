@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/furutachiKurea/gorder/internal/common/config"
 	"github.com/furutachiKurea/gorder/internal/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/internal/common/server"
 	"github.com/furutachiKurea/gorder/internal/stock/ports"
+	"github.com/furutachiKurea/gorder/internal/stock/service"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -22,10 +24,15 @@ func main() {
 	serviceName := viper.GetString("stock.service-name")
 	serverType := viper.GetString("stock.server-to-run")
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	app := service.NewApplication(ctx)
+
 	switch serverType {
 	case "grpc":
 		server.RunGRPCServer(serviceName, func(server *grpc.Server) {
-			svc := ports.NewGRPCServer()
+			svc := ports.NewGRPCServer(app)
 			stockpb.RegisterStockServiceServer(server, svc)
 		})
 	case "http":

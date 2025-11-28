@@ -10,6 +10,7 @@ import (
 	"github.com/furutachiKurea/gorder/internal/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/internal/common/server"
 	"github.com/furutachiKurea/gorder/internal/order/ports"
+	"github.com/furutachiKurea/gorder/internal/order/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -25,13 +26,20 @@ func init() {
 func main() {
 	serviceName := viper.GetString("order.service-name")
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	app := service.NewApplication(ctx)
+
 	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
-		svc := ports.NewGRPCServer()
+		svc := ports.NewGRPCServer(app)
 		orderpb.RegisterOrderServiceServer(server, svc)
 	})
 
 	go server.RunHTTPServer(serviceName, func(router *gin.Engine) {
-		ports.RegisterHandlersWithOptions(router, HTTPServer{}, ports.GinServerOptions{
+		ports.RegisterHandlersWithOptions(router, HTTPServer{
+			app: app,
+		}, ports.GinServerOptions{
 			BaseURL:      "/api",
 			Middlewares:  nil,
 			ErrorHandler: nil,

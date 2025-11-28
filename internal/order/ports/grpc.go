@@ -4,14 +4,17 @@ import (
 	"context"
 
 	"github.com/furutachiKurea/gorder/internal/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/internal/order/app"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type GRPCServer struct{}
+type GRPCServer struct {
+	app app.Application
+}
 
-func NewGRPCServer() *GRPCServer {
-	return &GRPCServer{}
+func NewGRPCServer(app app.Application) *GRPCServer {
+	return &GRPCServer{app: app}
 }
 
 func (G GRPCServer) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*emptypb.Empty, error) {
