@@ -10,7 +10,7 @@ import (
 
 // stub data
 var stub = map[string]*orderpb.Item{
-	"item_id": &orderpb.Item{
+	"item_id": {
 		Id:       "foo_item",
 		Name:     "stub_item",
 		Quantity: 100000000,

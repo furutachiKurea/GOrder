@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/furutachiKurea/gorder/common/config"
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/common/server"
 	"github.com/furutachiKurea/gorder/stock/ports"
 	"github.com/furutachiKurea/gorder/stock/service"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -16,7 +16,7 @@ import (
 
 func init() {
 	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
 

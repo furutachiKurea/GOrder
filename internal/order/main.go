@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 
@@ -13,14 +12,16 @@ import (
 	"github.com/furutachiKurea/gorder/order/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
 func init() {
 	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
+
 }
 
 func main() {
