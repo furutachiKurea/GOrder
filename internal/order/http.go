@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/furutachiKurea/gorder/internal/order/app"
+	"github.com/furutachiKurea/gorder/order/app"
 
 	"github.com/gin-gonic/gin"
 )

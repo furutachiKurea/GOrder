@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/furutachiKurea/gorder/internal/common/config"
-	"github.com/furutachiKurea/gorder/internal/common/genproto/orderpb"
-	"github.com/furutachiKurea/gorder/internal/common/server"
-	"github.com/furutachiKurea/gorder/internal/order/ports"
-	"github.com/furutachiKurea/gorder/internal/order/service"
+	"github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/furutachiKurea/gorder/order/ports"
+	"github.com/furutachiKurea/gorder/order/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"

@@ -1,11 +1,11 @@
-module github.com/furutachiKurea/gorder/internal/stock
+module github.com/furutachiKurea/gorder/stock
 
 go 1.25.4
 
-replace github.com/furutachiKurea/gorder/internal/common => ../common
+replace github.com/furutachiKurea/gorder/common => ../common
 
 require (
-	github.com/furutachiKurea/gorder/internal/common v0.0.0-00010101000000-000000000000
+	github.com/furutachiKurea/gorder/common v0.0.0-00010101000000-000000000000
 	github.com/spf13/viper v1.21.0
 	google.golang.org/grpc v1.77.0
 )

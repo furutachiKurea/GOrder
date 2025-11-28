@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/furutachiKurea/gorder/internal/stock/app"
+	"github.com/furutachiKurea/gorder/stock/app"
 )
 
 func NewApplication(ctx context.Context) app.Application {

@@ -1,4 +1,4 @@
-module github.com/furutachiKurea/gorder/internal/common
+module github.com/furutachiKurea/gorder/common
 
 go 1.25.4
 

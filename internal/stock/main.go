@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/furutachiKurea/gorder/internal/common/config"
-	"github.com/furutachiKurea/gorder/internal/common/genproto/stockpb"
-	"github.com/furutachiKurea/gorder/internal/common/server"
-	"github.com/furutachiKurea/gorder/internal/stock/ports"
-	"github.com/furutachiKurea/gorder/internal/stock/service"
+	"github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
+	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/furutachiKurea/gorder/stock/ports"
+	"github.com/furutachiKurea/gorder/stock/service"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"

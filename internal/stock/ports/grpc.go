@@ -3,8 +3,8 @@ package ports
 import (
 	"context"
 
-	"github.com/furutachiKurea/gorder/internal/common/genproto/stockpb"
-	"github.com/furutachiKurea/gorder/internal/stock/app"
+	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
+	"github.com/furutachiKurea/gorder/stock/app"
 )
 
 type GRPCServer struct {

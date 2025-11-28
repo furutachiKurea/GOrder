@@ -3,8 +3,8 @@ package ports
 import (
 	"context"
 
-	"github.com/furutachiKurea/gorder/internal/common/genproto/orderpb"
-	"github.com/furutachiKurea/gorder/internal/order/app"
+	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/order/app"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

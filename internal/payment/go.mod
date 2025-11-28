@@ -1,7 +1,5 @@
-module github.com/furutachiKurea/gorder/internal/payment
+module github.com/furutachiKurea/gorder/payment
 
 go 1.25.4
 
-replace (
-	github.com/furutachiKurea/gorder/internal/common => ../common
-)
+replace github.com/furutachiKurea/gorder/common => ../common
