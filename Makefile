@@ -1,5 +1,4 @@
 .PHONY: gen
-
 gen: genproto genopenapi
 
 .PHONY: genproto
@@ -9,3 +8,7 @@ genproto:
 .PHONY: genopenapi
 genopenapi:
 	@./scripts/genopenapi.sh
+
+.PHONY: tidy
+tidy:
+	@./scripts/tidy-all.sh
