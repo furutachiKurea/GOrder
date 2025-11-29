@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/discovery"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/common/server"
 	"github.com/furutachiKurea/gorder/order/ports"
@@ -33,6 +34,12 @@ func main() {
 
 	app, cleanup := service.NewApplication(ctx)
 	defer cleanup()
+
+	deregisterFn, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() { _ = deregisterFn() }()
 
 	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
 		svc := ports.NewGRPCServer(app)

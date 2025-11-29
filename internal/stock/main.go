@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/discovery"
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/common/server"
 	"github.com/furutachiKurea/gorder/stock/ports"
@@ -29,6 +30,12 @@ func main() {
 	defer cancel()
 
 	app := service.NewApplication(ctx)
+
+	deregisterFn, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() { _ = deregisterFn() }()
 
 	switch serverType {
 	case "grpc":
