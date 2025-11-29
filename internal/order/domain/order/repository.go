@@ -8,6 +8,6 @@ type Repository interface {
 	Update(
 		ctx context.Context,
 		order *Order,
-		updateFn func(context.Context, *Order) (*Order, error), // TODO 为什么这样定义 updateFn
+		updateFn func(context.Context, *Order) (*Order, error),
 	) error
 }

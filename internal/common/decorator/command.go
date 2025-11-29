@@ -8,7 +8,7 @@ import (
 
 // CommandHandler 定义了一个泛型处理器，接收 Query C 并返回 result R
 type CommandHandler[C, R any] interface {
-	Handle(ctx context.Context, command C) (R, error)
+	Handle(ctx context.Context, cmd C) (R, error)
 }
 
 // ApplyCommandDecorators 为给定的 CommandHandler 应用装饰器，并返回装饰后的 handler

@@ -16,6 +16,24 @@ var stub = map[string]*orderpb.Item{
 		Quantity: 100000000,
 		PriceId:  "price_id",
 	},
+	"item1": {
+		Id:       "item1",
+		Name:     "stub item 1",
+		Quantity: 1000000,
+		PriceId:  "stub_item1_price_id",
+	},
+	"item2": {
+		Id:       "item2",
+		Name:     "stub item 2",
+		Quantity: 1000000,
+		PriceId:  "stub_item2_price_id",
+	},
+	"item3": {
+		Id:       "item3",
+		Name:     "stub item 3",
+		Quantity: 1000000,
+		PriceId:  "stub_item3_price_id",
+	},
 }
 
 type MemoryStockRepository struct {
@@ -23,7 +41,7 @@ type MemoryStockRepository struct {
 	store map[string]*orderpb.Item
 }
 
-func NewMemoryOrderRepository() *MemoryStockRepository {
+func NewMemoryStockRepository() *MemoryStockRepository {
 	return &MemoryStockRepository{
 		lock:  &sync.RWMutex{},
 		store: stub,
