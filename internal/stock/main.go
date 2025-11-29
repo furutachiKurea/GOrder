@@ -15,6 +15,7 @@ import (
 )
 
 func init() {
+	logrus.SetLevel(logrus.DebugLevel)
 	if err := config.NewViperConfig(); err != nil {
 		logrus.Fatal(err)
 	}
