@@ -1,12 +1,11 @@
 package main
 
 import (
-	"context"
-
+	"github.com/furutachiKurea/gorder/common/broker"
 	"github.com/furutachiKurea/gorder/common/config"
-	"github.com/furutachiKurea/gorder/common/discovery"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/server"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -21,16 +20,18 @@ func main() {
 	serviceName := viper.GetString("payment.service-name")
 	serverType := viper.GetString("payment.server-to-run")
 
+	ch, closeCoon := broker.Connect(
+		viper.GetString("rabbitmq.user"),
+		viper.GetString("rabbitmq.password"),
+		viper.GetString("rabbitmq.host"),
+		viper.GetString("rabbitmq.port"),
+	)
+	defer func() {
+		_ = ch.Close()
+		_ = closeCoon()
+	}()
+
 	paymentHandler := NewPaymentHandler()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	deregisterFn, err := discovery.RegisterToConsul(ctx, serviceName)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	defer func() { _ = deregisterFn() }()
 
 	switch serverType {
 	case "grpc":

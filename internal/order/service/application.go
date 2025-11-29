@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/furutachiKurea/gorder/common/broker"
 	grpcclient "github.com/furutachiKurea/gorder/common/client"
 	"github.com/furutachiKurea/gorder/common/metrics"
 	"github.com/furutachiKurea/gorder/order/adapter"
@@ -11,7 +12,9 @@ import (
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/query"
 
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func NewApplication(ctx context.Context) (app app.Application, close func()) {
@@ -21,13 +24,22 @@ func NewApplication(ctx context.Context) (app app.Application, close func()) {
 	}
 	stockGRPC := grpc.NewStockGRPC(stockClient)
 
-	return newApplication(ctx, stockGRPC), func() {
+	ch, closeCoon := broker.Connect(
+		viper.GetString("rabbitmq.user"),
+		viper.GetString("rabbitmq.password"),
+		viper.GetString("rabbitmq.host"),
+		viper.GetString("rabbitmq.port"),
+	)
+
+	return newApplication(ctx, stockGRPC, ch), func() {
 		_ = closeStockClient()
+		_ = ch.Close()
+		_ = closeCoon()
 	}
 
 }
 
-func newApplication(_ context.Context, stockClient query.StockInterface) app.Application {
+func newApplication(_ context.Context, stockClient query.StockInterface, ch *amqp.Channel) app.Application {
 	orderRepo := adapter.NewMemoryOrderRepository()
 	logger := logrus.NewEntry(logrus.StandardLogger())
 	metricsClient := metrics.TodoMetrics{}
@@ -36,6 +48,7 @@ func newApplication(_ context.Context, stockClient query.StockInterface) app.App
 			CreateOrder: command.NewCreateOrderHandler(
 				orderRepo,
 				stockClient,
+				ch,
 				logger,
 				metricsClient,
 			),
