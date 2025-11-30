@@ -11,6 +11,7 @@ import (
 	"github.com/furutachiKurea/gorder/payment/domain"
 	"github.com/furutachiKurea/gorder/payment/infrastructure/processor"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
 func NewApplication(ctx context.Context) (app app.Application, close func()) {
@@ -20,9 +21,10 @@ func NewApplication(ctx context.Context) (app app.Application, close func()) {
 	}
 
 	orderGRPC := adapter.NewOderGRPC(orderClient)
-	memoryProcessor := processor.NewInmemProcessor()
+	// memoryProcessor := processor.NewInmemProcessor()
+	stripeProcessor := processor.NewStripeProcessor(viper.GetString("stripe-key"))
 
-	return newApplication(ctx, memoryProcessor, orderGRPC), func() {
+	return newApplication(ctx, stripeProcessor, orderGRPC), func() {
 		_ = closeOrderClient()
 	}
 }

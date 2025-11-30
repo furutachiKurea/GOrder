@@ -10,6 +10,7 @@ import (
 	"github.com/furutachiKurea/gorder/payment/infrastructure/consumer"
 	"github.com/furutachiKurea/gorder/payment/service"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
