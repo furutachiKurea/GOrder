@@ -10,8 +10,8 @@ import (
 	"github.com/furutachiKurea/gorder/common/server"
 	"github.com/furutachiKurea/gorder/stock/ports"
 	"github.com/furutachiKurea/gorder/stock/service"
-	"github.com/sirupsen/logrus"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -19,7 +19,7 @@ import (
 func init() {
 	logging.Init()
 	if err := config.NewViperConfig(); err != nil {
-		logrus.Fatal(err)
+		log.Fatal().Err(err).Msg("failed to init config")
 	}
 }
 
@@ -34,7 +34,7 @@ func main() {
 
 	deregisterFn, err := discovery.RegisterToConsul(ctx, serviceName)
 	if err != nil {
-		logrus.Fatal(err)
+		log.Fatal().Err(err).Msgf("failed to register service %s to consul", serviceName)
 	}
 	defer func() { _ = deregisterFn() }()
 
@@ -47,6 +47,6 @@ func main() {
 	case "http":
 		// TODO implement
 	default:
-		panic("unsupported service type: " + serverType)
+		log.Panic().Str("serverType", serverType).Msg("unsupported server type")
 	}
 }

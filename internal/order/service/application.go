@@ -13,7 +13,7 @@ import (
 	"github.com/furutachiKurea/gorder/order/app/query"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -41,7 +41,7 @@ func NewApplication(ctx context.Context) (app app.Application, close func()) {
 
 func newApplication(_ context.Context, stockClient query.StockInterface, ch *amqp.Channel) app.Application {
 	orderRepo := adapter.NewMemoryOrderRepository()
-	logger := logrus.NewEntry(logrus.StandardLogger())
+	logger := log.Logger
 	metricsClient := metrics.TodoMetrics{}
 	return app.Application{
 		Commands: app.Commands{

@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/furutachiKurea/gorder/common/discovery/consul"
-	"github.com/sirupsen/logrus"
-
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -27,17 +26,17 @@ func RegisterToConsul(ctx context.Context, serviceName string) (func() error, er
 	go func() {
 		for {
 			if err := registry.HealthCheck(instanceID, serviceName); err != nil {
-				logrus.Panicf("ho heart beat from %s to registry, err=%v", instanceID, err)
+				log.Panic().Msgf("ho heart beat from %s to registry, err=%v", instanceID, err)
 			}
 
 			time.Sleep(1 * time.Second)
 		}
 	}()
 
-	logrus.WithFields(logrus.Fields{
-		"serviceName": serviceName,
-		"addr":        grpcAddr,
-	}).Info("registered to consul")
+	log.Info().
+		Str("serviceName", serviceName).
+		Str("addr", grpcAddr).
+		Msg("registered to consul")
 
 	return func() error {
 		return registry.DeRegister(ctx, instanceID, serviceName)
@@ -59,6 +58,6 @@ func GetServiceAddr(ctx context.Context, serviceName string) (string, error) {
 	}
 
 	i := rand.Intn(len(addrs))
-	logrus.Infof("Discoverd %d instance of %s, addrs=%v", len(addrs), serviceName, addrs)
+	log.Info().Msgf("Discoverd %d instance of %s, addrs=%v", len(addrs), serviceName, addrs)
 	return addrs[i], nil
 }

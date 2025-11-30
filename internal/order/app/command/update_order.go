@@ -6,7 +6,9 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/decorator"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
-	"github.com/sirupsen/logrus"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type UpdateOrder struct {
@@ -23,7 +25,7 @@ type updateOrderHandler struct {
 
 func NewUpdateOrderHandler(
 	orderRepo domain.Repository,
-	logger *logrus.Entry,
+	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
 ) UpdateOrderHandler {
 	if orderRepo == nil {
@@ -39,7 +41,7 @@ func NewUpdateOrderHandler(
 
 func (c updateOrderHandler) Handle(ctx context.Context, cmd UpdateOrder) (any, error) {
 	if cmd.UpdateFn == nil {
-		logrus.Warnf("updateOrderHandler got nil UpdateFunc, order=%#v", cmd.Order)
+		log.Warn().Msgf("updateOrderHandler got nil UpdateFunc, order=%#v", cmd.Order)
 		cmd.UpdateFn = func(_ context.Context, order *domain.Order) (*domain.Order, error) {
 			return order, nil
 		}

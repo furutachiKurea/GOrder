@@ -8,7 +8,7 @@ import (
 	"time"
 
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type MemoryOrderRepository struct {
@@ -46,17 +46,17 @@ func (m *MemoryOrderRepository) Create(_ context.Context, order *domain.Order) (
 	m.store = append(m.store, newOrder)
 
 	// Debug 转换 store 内容为值类型切片
-	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+	if log.Debug().Enabled() {
 		storeValues := make([]domain.Order, len(m.store))
 		for i, o := range m.store {
 			storeValues[i] = *o
 		}
 
-		logrus.WithFields(logrus.Fields{
-			"input_order":        order,
-			"new_order":          newOrder,
-			"store_after_create": storeValues,
-		}).Debug("memory_order_repo_create")
+		log.Debug().
+			Any("input_order", order).
+			Any("new_order", newOrder).
+			Any("store_after_create", storeValues).
+			Msg("memory_order_repo_create")
 	}
 
 	return newOrder, nil
@@ -68,7 +68,7 @@ func (m *MemoryOrderRepository) Get(_ context.Context, orderID, customerID strin
 
 	for _, o := range m.store {
 		if o.ID == orderID && o.CustomerID == customerID {
-			logrus.Debugf("memory_order_repo_get||found||id=%s||customID=%s||res=%+v", orderID, customerID, *o)
+			log.Debug().Msgf("memory_order_repo_get||found||id=%s||customID=%s||res=%+v", orderID, customerID, *o)
 			return o, nil
 		}
 	}

@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -67,10 +67,10 @@ func (r *Registry) Register(ctx context.Context, instanceID, serviceName, hostPo
 }
 
 func (r *Registry) DeRegister(ctx context.Context, instanceID, serviceName string) error {
-	logrus.WithFields(logrus.Fields{
-		"instance_id":  instanceID,
-		"service_name": serviceName,
-	}).Info("deregister from consul")
+	log.Info().
+		Str("instanceID", instanceID).
+		Str("serviceName", serviceName).
+		Msg("deregistering instance")
 	defer func() {
 
 	}()

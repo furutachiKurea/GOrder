@@ -6,8 +6,7 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/decorator"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
-
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 type GetCustomerOrder struct {
@@ -24,7 +23,7 @@ type getCustomerOrderHandler struct {
 
 func NewGetCustomerOrderHandler(
 	orderRepo domain.Repository,
-	logger *logrus.Entry,
+	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
 ) GetCustomerOrderHandler {
 	if orderRepo == nil {

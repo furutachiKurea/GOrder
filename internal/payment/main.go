@@ -5,15 +5,15 @@ import (
 	"github.com/furutachiKurea/gorder/common/config"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/rs/zerolog/log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 func init() {
 	logging.Init()
 	if err := config.NewViperConfig(); err != nil {
-		logrus.Fatal(err)
+		log.Fatal().Err(err).Msg("failed to init config")
 	}
 }
 func main() {
@@ -35,10 +35,10 @@ func main() {
 
 	switch serverType {
 	case "grpc":
-		logrus.Panic("unsupported type: ", serverType)
+		log.Panic().Str("serverType", serverType).Msg("unsupported server type")
 	case "http":
 		server.RunHTTPServer(serviceName, paymentHandler.RegisterRoutes)
 	default:
-		logrus.Panic("unsupported service type: " + serverType)
+		log.Panic().Str("serverType", serverType).Msg("unsupported server type")
 	}
 }

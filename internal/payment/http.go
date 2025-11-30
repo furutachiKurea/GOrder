@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type PaymentHandler struct {
@@ -17,5 +17,5 @@ func (h PaymentHandler) RegisterRoutes(router *gin.Engine) {
 }
 
 func (h PaymentHandler) handleWebhook(c *gin.Context) {
-	logrus.Info("Got webhook from stripe")
+	log.Info().Msg("Got webhook from stripe")
 }

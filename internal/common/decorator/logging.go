@@ -5,26 +5,26 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 type queryLoggingDecorator[C, R any] struct {
-	logger *logrus.Entry
+	logger zerolog.Logger
 	base   QueryHandler[C, R]
 }
 
 func (q queryLoggingDecorator[C, R]) Handle(ctx context.Context, cmd C) (result R, err error) {
-	logger := q.logger.WithFields(logrus.Fields{
-		"query":      generateActionName(cmd),
-		"query_body": fmt.Sprintf("%#v", cmd),
-	})
+	logger := q.logger.With().
+		Str("query", generateActionName(cmd)).
+		Str("query_body", fmt.Sprintf("%#v", cmd)).
+		Logger()
 
-	logger.Debug("Executing query")
+	logger.Debug().Msg("Executing query")
 	defer func() {
 		if err == nil {
-			logger.Info("Query executed successfully")
+			logger.Info().Msg("Query executed successfully")
 		} else {
-			logger.Error("Failed to execute query: ", err)
+			logger.Error().Err(err).Msg("Failed to execute query")
 		}
 	}()
 

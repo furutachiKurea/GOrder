@@ -7,13 +7,12 @@ import (
 	"github.com/furutachiKurea/gorder/stock/adapter"
 	"github.com/furutachiKurea/gorder/stock/app"
 	"github.com/furutachiKurea/gorder/stock/app/query"
-
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 func NewApplication(_ context.Context) app.Application {
 	stockRepo := adapter.NewMemoryStockRepository()
-	logger := logrus.NewEntry(logrus.StandardLogger())
+	logger := log.Logger
 	metricsClient := metrics.TodoMetrics{}
 	return app.Application{
 		Queries: app.Queries{

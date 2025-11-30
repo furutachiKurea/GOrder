@@ -1,25 +1,22 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"net"
 
-	grpclogrous "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpctags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"github.com/sirupsen/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
-func init() {
-	logger := logrus.New()
-	logger.SetLevel(logrus.WarnLevel)
-	grpclogrous.ReplaceGrpcLogger(logrus.NewEntry(logger))
-}
-
 func RunGRPCServer(serviceName string, registerServer func(server *grpc.Server)) {
 	addr := viper.Sub(serviceName).GetString("grpc-addr")
 	if addr == "" {
-		// TODO warning log
+		log.Warn().Msg("grpc-addr is empty, use fallback-grpc-addr instead")
 		addr = viper.GetString("fallback-grpc-addr")
 	}
 
@@ -27,16 +24,17 @@ func RunGRPCServer(serviceName string, registerServer func(server *grpc.Server))
 }
 
 func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) {
-	logrusEntry := logrus.NewEntry(logrus.StandardLogger())
+	logger := log.Logger
+
 	grpcServer := grpc.NewServer(
 		// 相当于中间件
 		grpc.ChainUnaryInterceptor(
 			grpctags.UnaryServerInterceptor(grpctags.WithFieldExtractor(grpctags.CodeGenRequestFieldExtractor)),
-			grpclogrous.UnaryServerInterceptor(logrusEntry),
+			logging.UnaryServerInterceptor(InterceptorLogger(logger)),
 		),
 		grpc.ChainStreamInterceptor(
 			grpctags.StreamServerInterceptor(grpctags.WithFieldExtractor(grpctags.CodeGenRequestFieldExtractor)),
-			grpclogrous.StreamServerInterceptor(logrusEntry),
+			logging.StreamServerInterceptor(InterceptorLogger(logger)),
 		), // 拦截流式调用
 	)
 
@@ -44,11 +42,32 @@ func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) 
 
 	listen, err := net.Listen("tcp", addr)
 	if err != nil {
-		logrus.Panic(err)
+		log.Panic().Err(err).Msg("")
 	}
 
-	logrus.Infof("Starting gRPC server on %s", addr)
+	log.Info().Msgf("Starting gRPC server on %s", addr)
 	if err := grpcServer.Serve(listen); err != nil {
-		logrus.Panic(err)
+		log.Panic().Err(err).Msg("")
 	}
+}
+
+// InterceptorLogger adapts zerolog logger to interceptor logger.
+// This code is simple enough to be copied and not imported.
+func InterceptorLogger(l zerolog.Logger) logging.Logger {
+	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+		l := l.With().Fields(fields).Logger()
+
+		switch lvl {
+		case logging.LevelDebug:
+			l.Debug().Msg(msg)
+		case logging.LevelInfo:
+			l.Info().Msg(msg)
+		case logging.LevelWarn:
+			l.Warn().Msg(msg)
+		case logging.LevelError:
+			l.Error().Msg(msg)
+		default:
+			panic(fmt.Sprintf("unknown level %v", lvl))
+		}
+	})
 }

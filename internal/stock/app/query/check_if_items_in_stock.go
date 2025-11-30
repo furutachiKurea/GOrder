@@ -6,7 +6,7 @@ import (
 	"github.com/furutachiKurea/gorder/common/decorator"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 type CheckIfItemsInStock struct {
@@ -21,7 +21,7 @@ type checkIfItemsInStockHandler struct {
 
 func NewCheckIfItemsInStockHandler(
 	stockRepo domain.Repository,
-	logger *logrus.Entry,
+	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
 ) CheckIfItemsInStockHandler {
 	if stockRepo == nil {

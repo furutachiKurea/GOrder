@@ -11,9 +11,9 @@ import (
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/order/app/query"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
+	"github.com/rs/zerolog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/sirupsen/logrus"
 )
 
 type CreateOrder struct {
@@ -37,7 +37,7 @@ func NewCreateOrderHandler(
 	orderRepo domain.Repository,
 	stockGRPC query.StockInterface,
 	channel *amqp.Channel,
-	logger *logrus.Entry,
+	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
 ) CreateOrderHandler {
 	if orderRepo == nil {
