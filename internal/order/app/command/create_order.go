@@ -11,9 +11,9 @@ import (
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/order/app/query"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
-	"github.com/rs/zerolog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/rs/zerolog"
 )
 
 type CreateOrder struct {
@@ -82,7 +82,8 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		return nil, err
 	}
 
-	marshalledOrder, err := json.Marshal(order)
+	// orderpb 生成的 Order struct tag 与 Go 默认序列化生成的 json 字段名不同，需要转换成 proto 版本的 Order 再序列化
+	marshalledOrder, err := json.Marshal(order.ToProto())
 	if err != nil {
 		return nil, err
 	}
