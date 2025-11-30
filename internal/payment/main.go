@@ -5,6 +5,7 @@ import (
 	"github.com/furutachiKurea/gorder/common/config"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/furutachiKurea/gorder/payment/infrastructure/consumer"
 	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/viper"
@@ -30,6 +31,8 @@ func main() {
 		_ = ch.Close()
 		_ = closeCoon()
 	}()
+
+	go consumer.NewConsumer().Listen(ch)
 
 	paymentHandler := NewPaymentHandler()
 
