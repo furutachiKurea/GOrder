@@ -11,7 +11,6 @@ import (
 
 func Init() {
 	zerolog.ErrorFieldName = "err"
-	zerolog.MessageFieldName = "msg"
 
 	if isLocal, _ := strconv.ParseBool(os.Getenv("LOCAL_ENV")); isLocal {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
