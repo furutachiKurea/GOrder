@@ -183,6 +183,7 @@ type Order struct {
 	ID            string                 `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	CustomerId    string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	PaymentLink   string                 `protobuf:"bytes,5,opt,name=payment_link,json=paymentLink,proto3" json:"payment_link,omitempty"`
 	Items         []*Item                `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -235,6 +236,13 @@ func (x *Order) GetCustomerId() string {
 func (x *Order) GetStatus() string {
 	if x != nil {
 		return x.Status
+	}
+	return ""
+}
+
+func (x *Order) GetPaymentLink() string {
+	if x != nil {
+		return x.PaymentLink
 	}
 	return ""
 }
@@ -329,12 +337,13 @@ const file_orderpb_order_proto_rawDesc = "" +
 	"customerId\">\n" +
 	"\x10ItemWithQuantity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x05R\bquantity\"u\n" +
+	"\bquantity\x18\x02 \x01(\x05R\bquantity\"\x98\x01\n" +
 	"\x05Order\x12\x0e\n" +
 	"\x02ID\x18\x01 \x01(\tR\x02ID\x12\x1f\n" +
 	"\vcustomer_id\x18\x02 \x01(\tR\n" +
 	"customerId\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\x12#\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12!\n" +
+	"\fpayment_link\x18\x05 \x01(\tR\vpaymentLink\x12#\n" +
 	"\x05items\x18\x04 \x03(\v2\r.orderpb.ItemR\x05items\"a\n" +
 	"\x04Item\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +

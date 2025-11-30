@@ -5,7 +5,13 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/order/app"
+	"github.com/furutachiKurea/gorder/order/app/command"
+	"github.com/furutachiKurea/gorder/order/app/query"
+	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
+	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -18,16 +24,46 @@ func NewGRPCServer(app app.Application) *GRPCServer {
 }
 
 func (G GRPCServer) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*emptypb.Empty, error) {
-	// TODO implement me
-	panic("implement me")
+	_, err := G.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
+		CustomerID: request.CustomerId,
+		Items:      request.Items,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest) (*orderpb.Order, error) {
-	// TODO implement me
-	panic("implement me")
+	order, err := G.app.Queries.GetCustomerOrder.Handle(ctx, query.GetCustomerOrder{
+		CustomerID: request.CustomerId,
+		OrderID:    request.OrderId,
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, err.Error())
+	}
+
+	return order.ToProto(), nil
 }
 
-func (G GRPCServer) UpdateOrder(ctx context.Context, order *orderpb.Order) (*emptypb.Empty, error) {
-	// TODO implement me
-	panic("implement me")
+func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (*emptypb.Empty, error) {
+	log.Info().Any("request", request).Msg("order_grpc||request_in")
+	newOrder, err := domain.NewOrder(request.ID, request.CustomerId, request.Status, request.PaymentLink, request.Items)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	_, err = G.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
+		Order: newOrder,
+		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
+			return order, nil
+		},
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &emptypb.Empty{}, nil
 }

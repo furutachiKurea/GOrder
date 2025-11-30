@@ -11,3 +11,11 @@ type Repository interface {
 		updateFn func(context.Context, *Order) (*Order, error),
 	) error
 }
+
+type NotFoundError struct {
+	OrderID string
+}
+
+func (e NotFoundError) Error() string {
+	return "order " + e.OrderID + " not found"
+}
