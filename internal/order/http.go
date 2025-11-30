@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
@@ -31,9 +32,10 @@ func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID stri
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "success",
-		"customer_id": customerID,
-		"order_id":    result.OrderID,
+		"message":      "success",
+		"customer_id":  customerID,
+		"order_id":     result.OrderID,
+		"redirect_url": fmt.Sprintf("http://localhost:8082/success?customer_id=%s&order_id=%s", customerID, result.OrderID),
 	})
 
 }
@@ -49,6 +51,10 @@ func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerI
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "success", "order": order})
+	c.JSON(http.StatusOK, gin.H{"message": "success",
+		"data": gin.H{
+			"Order": order.ToProto(),
+		},
+	})
 	return
 }

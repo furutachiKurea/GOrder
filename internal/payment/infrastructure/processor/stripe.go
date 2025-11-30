@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	succesURL = "http://localhost:8282"
+	successURL = "http://localhost:8082"
 )
 
 type StripeProcessor struct {
@@ -48,7 +48,7 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 		Metadata:   metadata,
 		LineItems:  items,
 		Mode:       stripe.String(stripe.CheckoutSessionModePayment),
-		SuccessURL: stripe.String(succesURL),
+		SuccessURL: stripe.String(successURL),
 	}
 
 	result, err := session.New(params)

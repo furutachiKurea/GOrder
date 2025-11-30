@@ -28,3 +28,4 @@
 !*.proto
 !*.sh
 !Makefile
+!*.html

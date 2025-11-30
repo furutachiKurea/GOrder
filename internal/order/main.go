@@ -48,6 +48,7 @@ func main() {
 	})
 
 	go server.RunHTTPServer(serviceName, func(router *gin.Engine) {
+		router.StaticFile("/success", "../../public/success.html")
 		ports.RegisterHandlersWithOptions(router, HTTPServer{
 			app: app,
 		}, ports.GinServerOptions{
