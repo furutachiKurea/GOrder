@@ -17,7 +17,7 @@ func NewGRPCServer(app app.Application) *GRPCServer {
 }
 
 func (G GRPCServer) GetItems(ctx context.Context, request *stockpb.GetItemsRequest) (*stockpb.GetItemsResponse, error) {
-	items, err := G.app.Queries.GetItems.Handle(ctx, query.GetItems{ItemIds: request.ItemIds})
+	items, err := G.app.Queries.GetItems.Handle(ctx, query.GetItems{ItemIDs: request.ItemIds})
 	if err != nil {
 		return nil, err
 	}

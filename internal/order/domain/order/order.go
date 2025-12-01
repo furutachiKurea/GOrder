@@ -30,7 +30,7 @@ func NewOrder(id, customerID, status, paymentLink string, items []*orderpb.Item)
 		return nil, errors.New("empty status")
 	}
 
-	if items == nil || len(items) == 0 {
+	if len(items) == 0 {
 		return nil, errors.New("items cannot be nil or empty")
 	}
 

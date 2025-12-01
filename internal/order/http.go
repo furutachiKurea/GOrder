@@ -56,5 +56,4 @@ func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerI
 			"Order": order.ToProto(),
 		},
 	})
-	return
 }

@@ -54,19 +54,19 @@ func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*o
 
 	var (
 		res        []*orderpb.Item
-		missingIds []string
+		missingIDs []string
 	)
 
 	for _, id := range ids {
 		if _, ok := m.store[id]; ok {
 			res = append(res, stub[id])
 		} else {
-			missingIds = append(missingIds, id)
+			missingIDs = append(missingIDs, id)
 		}
 	}
 
 	if len(res) != len(ids) {
-		return res, domain.NotFoundError{Missing: missingIds} // TODO res 不应该被使用或者为 nil
+		return res, domain.NotFoundError{Missing: missingIDs} // TODO res 不应该被使用或者为 nil
 	}
 
 	return res, nil

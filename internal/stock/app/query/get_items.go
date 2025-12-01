@@ -11,7 +11,7 @@ import (
 )
 
 type GetItems struct {
-	ItemIds []string
+	ItemIDs []string
 }
 
 type GetItemsHandler decorator.QueryHandler[GetItems, []*orderpb.Item]
@@ -37,5 +37,5 @@ func NewGetItemsHandler(
 }
 
 func (g getItemsHandler) Handle(ctx context.Context, query GetItems) ([]*orderpb.Item, error) {
-	return g.stockRepo.GetItems(ctx, query.ItemIds)
+	return g.stockRepo.GetItems(ctx, query.ItemIDs)
 }

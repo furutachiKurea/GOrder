@@ -9,6 +9,14 @@ genproto:
 genopenapi:
 	@./scripts/genopenapi.sh
 
+.PHONY: fmt
+fmt:
+	goimports -l -w internal/
+
+.PHONY: lint
+lint:
+	@./scripts/lint.sh
+
 .PHONY: tidy
 tidy:
 	@./scripts/tidy-all.sh

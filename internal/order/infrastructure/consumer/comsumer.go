@@ -41,7 +41,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	var forever chan struct{}
 	go func() {
 		for msg := range msgs {
-			c.handleMessage(msg, q, ch)
+			c.handleMessage(msg, q)
 		}
 	}()
 
@@ -49,7 +49,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 }
 
 // handleMessage 处理接收到的订单创建消息，创建支付链接
-func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, ch *amqp.Channel) {
+func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
 	log.Info().
 		Str("msg", string(msg.Body)).
 		Msgf("order received message from %s", q.Name)
