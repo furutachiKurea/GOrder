@@ -3,15 +3,15 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
-
 	"github.com/stripe/stripe-go/v84"
 	"github.com/stripe/stripe-go/v84/checkout/session"
 )
 
-var (
-	successURL = "http://localhost:8082"
+const (
+	successURL = "http://localhost:8082/success"
 )
 
 type StripeProcessor struct {
@@ -43,12 +43,14 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 		"customer_id": order.CustomerId,
 		"status":      order.Status,
 		"items":       string(marshalledItems),
+		// "payment_link": order.PaymentLink, TODO 我觉着这个不应该放在metadata里，payment_link 此时还没有生成
 	}
+
 	params := &stripe.CheckoutSessionParams{
 		Metadata:   metadata,
 		LineItems:  items,
 		Mode:       stripe.String(stripe.CheckoutSessionModePayment),
-		SuccessURL: stripe.String(successURL),
+		SuccessURL: stripe.String(fmt.Sprintf("%s?order_id=%s&customer_id=%s", successURL, order.ID, order.CustomerId)),
 	}
 
 	result, err := session.New(params)
