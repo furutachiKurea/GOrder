@@ -5,11 +5,13 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/furutachiKurea/gorder/common/broker"
 	"github.com/furutachiKurea/gorder/common/config"
 	"github.com/furutachiKurea/gorder/common/discovery"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/furutachiKurea/gorder/order/infrastructure/consumer"
 	"github.com/furutachiKurea/gorder/order/ports"
 	"github.com/furutachiKurea/gorder/order/service"
 
@@ -41,6 +43,19 @@ func main() {
 		log.Fatal().Err(err).Msgf("failed to register service %s to consul", serviceName)
 	}
 	defer func() { _ = deregisterFn() }()
+
+	ch, closeCoon := broker.Connect(
+		viper.GetString("rabbitmq.user"),
+		viper.GetString("rabbitmq.password"),
+		viper.GetString("rabbitmq.host"),
+		viper.GetString("rabbitmq.port"),
+	)
+	defer func() {
+		_ = ch.Close()
+		_ = closeCoon()
+	}()
+
+	go consumer.NewConsumer(app).Listen(ch)
 
 	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
 		svc := ports.NewGRPCServer(app)

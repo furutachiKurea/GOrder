@@ -79,7 +79,7 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            padding: clamp(18px, 3vw, 28px);
+            padding: clamp(16px, 2.6vw, 24px);
             position: relative;
             overflow: hidden;
         }
@@ -141,7 +141,7 @@
         }
 
         .status-hint {
-            margin: 0 0 14px;
+            margin: 6px 0 12px;
             color: var(--text-secondary);
             line-height: 1.6;
         }
@@ -150,7 +150,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin: 10px 0 18px;
+            margin: 6px 0 12px;
         }
 
         .btn {
@@ -182,18 +182,34 @@
 
         .tips {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 10px;
-            margin-top: 12px;
+            margin-top: 8px;
         }
 
         .tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
             background: var(--panel);
             padding: 12px 14px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.06);
             color: var(--text-secondary);
             font-size: 14px;
+        }
+
+        .tip-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(79, 209, 197, 0.3), rgba(44, 179, 163, 0.35));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: grid;
+            place-items: center;
+            color: #0a1b25;
+            font-weight: 700;
+            font-size: 13px;
         }
 
         .timeline {
@@ -338,9 +354,14 @@
             </div>
 
             <div class="tips">
-                <div class="tip">支付前请确认订单金额与收款方信息。</div>
-                <div class="tip">支付完成后系统将自动同步状态，通常无需手动刷新。</div>
-                <div class="tip">若长时间未更新，可点击上方按钮或联系客服处理。</div>
+                <div class="tip">
+                    <span class="tip-icon">i</span>
+                    <div>支付前请确认订单金额与收款方信息。</div>
+                </div>
+                <div class="tip">
+                    <span class="tip-icon">i</span>
+                    <div>支付完成后系统将自动同步状态，通常无需手动刷新。</div>
+                </div>
             </div>
 
             <ul class="timeline">
