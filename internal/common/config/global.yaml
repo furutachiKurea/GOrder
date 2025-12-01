@@ -1,5 +1,6 @@
 fallback-grpc-addr: 127.0.0.1:9966
 fallback-http-addr: 127.0.0.1:9967
+dial-grpc-timeout: 10s
 
 order:
   service-name: order
