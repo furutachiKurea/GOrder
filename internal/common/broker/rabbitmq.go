@@ -1,10 +1,12 @@
 package broker
 
 import (
+	"context"
 	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 )
 
 // Connect 连接到 RabbitMQ 并创建 Exchange
@@ -35,4 +37,38 @@ func Connect(user, password, host, port string) (ch *amqp.Channel, closeCoon fun
 	}
 
 	return ch, coon.Close
+}
+
+type RabbitMQHeaderCarrier map[string]any
+
+func (r RabbitMQHeaderCarrier) Get(key string) string {
+	if v, ok := r[key]; ok {
+		return v.(string)
+	}
+
+	return ""
+}
+
+func (r RabbitMQHeaderCarrier) Set(key, value string) {
+	r[key] = value
+}
+
+func (r RabbitMQHeaderCarrier) Keys() []string {
+	keys := make([]string, 0, len(r))
+
+	for key := range r {
+		keys = append(keys, key)
+	}
+
+	return keys
+}
+
+func InjectRabbitMQHeaders(ctx context.Context) map[string]any {
+	carrier := make(RabbitMQHeaderCarrier)
+	otel.GetTextMapPropagator().Inject(ctx, &carrier)
+	return carrier
+}
+
+func ExtractRabbitMQHeaders(ctx context.Context, headers map[string]any) context.Context {
+	return otel.GetTextMapPropagator().Extract(ctx, RabbitMQHeaderCarrier(headers))
 }

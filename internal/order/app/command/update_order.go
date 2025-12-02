@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/tracing"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
 	"github.com/rs/zerolog"
@@ -40,6 +41,9 @@ func NewUpdateOrderHandler(
 }
 
 func (c updateOrderHandler) Handle(ctx context.Context, cmd UpdateOrder) (any, error) {
+	ctx, span := tracing.Start(ctx, "updateOrderHandler")
+	defer span.End()
+
 	if cmd.UpdateFn == nil {
 		log.Warn().Msgf("updateOrderHandler got nil UpdateFunc, order=%#v", cmd.Order)
 		cmd.UpdateFn = func(_ context.Context, order *domain.Order) (*domain.Order, error) {

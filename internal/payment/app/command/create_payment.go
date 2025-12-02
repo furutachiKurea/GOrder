@@ -5,10 +5,11 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/decorator"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/payment/domain"
-	"github.com/rs/zerolog/log"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type CreatePayment struct {
@@ -48,6 +49,9 @@ func NewCreatePaymentHandler(
 
 // Handle 创建支付链接并更新订单状态为等待支付，返回支付链接，如果更新订单是失败会同时返回 error
 func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (string, error) {
+	ctx, span := tracing.Start(ctx, "createPaymentHandle")
+	defer span.End()
+
 	link, err := c.processor.CreatePaymentLink(ctx, cmd.Order)
 	if err != nil {
 		return "", err

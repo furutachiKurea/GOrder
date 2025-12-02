@@ -7,6 +7,7 @@ import (
 	"github.com/furutachiKurea/gorder/common/config"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/payment/infrastructure/consumer"
 	"github.com/furutachiKurea/gorder/payment/service"
 
@@ -22,11 +23,19 @@ func init() {
 	}
 }
 func main() {
+	serviceName := viper.GetString("payment.service-name")
+	serverType := viper.GetString("payment.server-to-run")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	serviceName := viper.GetString("payment.service-name")
-	serverType := viper.GetString("payment.server-to-run")
+	shutdown, err := tracing.InitJaegerProvider(viper.GetString("jaeger.url"), serviceName)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to init jaeger provider")
+	}
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 
 	app, cleanup := service.NewApplication(ctx)
 	defer cleanup()

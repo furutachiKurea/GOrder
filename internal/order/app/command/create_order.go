@@ -14,6 +14,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
 )
 
 type CreateOrder struct {
@@ -63,6 +64,15 @@ func NewCreateOrderHandler(
 }
 
 func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*CreateOrderResult, error) {
+	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	t := otel.Tracer("rabbitmq")
+	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", q.Name))
+	defer span.End()
+
 	validItems, err := c.validate(ctx, cmd.Items)
 	if err != nil {
 		return nil, fmt.Errorf("validate order items: %w", err)
@@ -76,22 +86,20 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		return nil, fmt.Errorf("create order: %w", err)
 	}
 
-	// send order created event to RabbitMQ
-	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	// orderpb 生成的 Order struct tag 与 Go 默认序列化生成的 json 字段名不同，需要转换成 proto 版本的 Order 再序列化
 	marshalledOrder, err := json.Marshal(order.ToProto())
 	if err != nil {
 		return nil, err
 	}
 
+	header := broker.InjectRabbitMQHeaders(ctx)
+
+	// send order created event to RabbitMQ
 	err = c.channel.PublishWithContext(ctx, "", q.Name, false, false, amqp.Publishing{
 		ContentType:  "application/json",
 		DeliveryMode: amqp.Persistent,
 		Body:         marshalledOrder,
+		Headers:      header,
 	})
 	if err != nil {
 		return nil, err

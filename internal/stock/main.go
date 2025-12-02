@@ -8,6 +8,7 @@ import (
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/server"
+	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/stock/ports"
 	"github.com/furutachiKurea/gorder/stock/service"
 
@@ -29,6 +30,14 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	shutdown, err := tracing.InitJaegerProvider(viper.GetString("jaeger.url"), serviceName)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to init jaeger provider")
+	}
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 
 	app := service.NewApplication(ctx)
 

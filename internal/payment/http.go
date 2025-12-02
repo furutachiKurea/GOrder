@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v84"
 	"github.com/stripe/stripe-go/v84/webhook"
+	"go.opentelemetry.io/otel"
 )
 
 type PaymentHandler struct {
@@ -67,6 +70,9 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 		if session.PaymentStatus == stripe.CheckoutSessionPaymentStatusPaid {
 			log.Info().Str("session", session.ID).Msg("payment check out for session success")
 
+			ctx, cancel := context.WithCancel(c)
+			defer cancel()
+
 			var items []*orderpb.Item
 			_ = json.Unmarshal([]byte(session.Metadata["items"]), &items)
 
@@ -83,11 +89,17 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 				return
 			}
 
-			_ = h.channel.PublishWithContext(c, broker.EventOrderPaid, "", false, false,
+			t := otel.Tracer("rabbitmq")
+			mqCtx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
+			defer span.End()
+
+			headers := broker.InjectRabbitMQHeaders(mqCtx)
+			_ = h.channel.PublishWithContext(mqCtx, broker.EventOrderPaid, "", false, false,
 				amqp.Publishing{
 					ContentType:  "application/json",
 					DeliveryMode: amqp.Persistent,
 					Body:         marshalledOrder,
+					Headers:      headers,
 				})
 			log.Info().
 				Str("message_body", string(marshalledOrder)).

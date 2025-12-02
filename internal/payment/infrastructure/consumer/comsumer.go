@@ -3,11 +3,13 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/broker"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/payment/app"
 	"github.com/furutachiKurea/gorder/payment/app/command"
+	"go.opentelemetry.io/otel"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
@@ -50,6 +52,11 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
 		Str("msg", string(msg.Body)).
 		Msgf("payment received message from %s", q.Name)
 
+	ctx := broker.ExtractRabbitMQHeaders(context.Background(), msg.Headers)
+	t := otel.Tracer("rabbitmq")
+	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
+	defer span.End()
+
 	o := &orderpb.Order{}
 	if err := json.Unmarshal(msg.Body, o); err != nil {
 		log.Info().
@@ -60,7 +67,7 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
 	}
 
 	log.Debug().Any("unmarshalled_order", o).Msg("unmarshalled order from message")
-	_, err := c.app.Commands.CreatePayment.Handle(context.TODO(), command.CreatePayment{Order: o})
+	_, err := c.app.Commands.CreatePayment.Handle(ctx, command.CreatePayment{Order: o})
 	if err != nil {
 		// TODO 重试
 		log.Info().
@@ -69,6 +76,8 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
 		_ = msg.Nack(false, false)
 		return
 	}
+
+	span.AddEvent("payment.created")
 
 	_ = msg.Ack(false)
 	log.Info().Msg("consume success")
