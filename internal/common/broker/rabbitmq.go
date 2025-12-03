@@ -9,6 +9,11 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
+const (
+	DLX = "dlx"
+	DLQ = "dlq"
+)
+
 // Connect 连接到 RabbitMQ 并创建 Exchange
 func Connect(user, password, host, port string) (ch *amqp.Channel, closeCoon func() error) {
 	addr := fmt.Sprintf("amqp://%s:%s@%s:%s/", user, password, host, port)
@@ -36,7 +41,31 @@ func Connect(user, password, host, port string) (ch *amqp.Channel, closeCoon fun
 		log.Fatal().Err(err).Str("exchange", EventOrderPaid).Msg("failed to declare exchange")
 	}
 
+	if err = createDLX(ch); err != nil {
+		log.Fatal().Err(err).Msg("failed to create dlx")
+	}
+
 	return ch, coon.Close
+}
+
+func createDLX(ch *amqp.Channel) error {
+	q, err := ch.QueueDeclare("share_queue", true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+
+	err = ch.ExchangeDeclare(DLX, amqp.ExchangeFanout, true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+
+	err = ch.QueueBind(q.Name, "", DLX, false, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = ch.QueueDeclare(DLQ, true, false, false, false, nil)
+	return err
 }
 
 type RabbitMQHeaderCarrier map[string]any
