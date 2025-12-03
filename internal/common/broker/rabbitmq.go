@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	_ "github.com/furutachiKurea/gorder/common/config"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 )
 
@@ -17,7 +20,7 @@ const (
 )
 
 var (
-	maxRetryCount int64 = 3 // TODO 从配置获取
+	maxRetryCount int64 = viper.GetInt64("rabbitmq.max-retry") // TODO 从配置获取
 )
 
 // Connect 连接到 RabbitMQ 并创建 Exchange

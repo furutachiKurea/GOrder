@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/furutachiKurea/gorder/common/config"
+	_ "github.com/furutachiKurea/gorder/common/config"
 	"github.com/furutachiKurea/gorder/common/discovery"
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/common/logging"
@@ -19,9 +19,6 @@ import (
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		log.Fatal().Err(err).Msg("failed to init config")
-	}
 }
 
 func main() {
