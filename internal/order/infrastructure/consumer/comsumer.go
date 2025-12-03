@@ -43,7 +43,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	var forever chan struct{}
 	go func() {
 		for msg := range msgs {
-			c.handleMessage(msg, q)
+			c.handleMessage(ch, msg, q)
 		}
 	}()
 
@@ -51,7 +51,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 }
 
 // handleMessage 处理接收到的订单创建消息，创建支付链接
-func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
+func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Queue) {
 	log.Info().
 		Str("msg", string(msg.Body)).
 		Msgf("order received message from %s", q.Name)
@@ -61,18 +61,26 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
 	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
 	defer span.End()
 
+	var err error
+	defer func() {
+		if err != nil {
+			_ = msg.Nack(false, false)
+		} else {
+			_ = msg.Ack(false)
+		}
+	}()
+
 	o := &domain.Order{}
 	if err := json.Unmarshal(msg.Body, o); err != nil {
 		log.Info().
 			Err(err).
 			Msg("failed to unmarshal msg.body to domain.order")
 
-		_ = msg.Nack(false, false)
 		return
 	}
 
 	log.Debug().Any("unmarshalled_order", o).Msg("unmarshalled order from message")
-	_, err := c.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
+	_, err = c.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
 		Order: o,
 		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
 			if err := order.IsPaid(); err != nil {
@@ -83,16 +91,21 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
 		},
 	})
 	if err != nil {
-		// TODO 重试
 		log.Info().
 			Err(err).
 			Msgf("error updating order, orderID = %s", o.ID)
-		_ = msg.Nack(false, false)
+
+		if err = broker.HandlerRetry(ctx, ch, &msg); err != nil {
+			log.Warn().Err(err).
+				Str("message_id", msg.MessageId).
+				Msg("retry_error, error handling retry")
+			return
+		}
+
 		return
 	}
 
 	span.AddEvent("order.updated")
 
-	_ = msg.Ack(false)
 	log.Info().Msg("order consume success paid event success")
 }

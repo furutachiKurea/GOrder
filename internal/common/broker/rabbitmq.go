@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
@@ -10,8 +11,13 @@ import (
 )
 
 const (
-	DLX = "dlx"
-	DLQ = "dlq"
+	DLX                = "dlx"
+	DLQ                = "dlq"
+	amqpRetryHeaderKey = "x-retry-count"
+)
+
+var (
+	maxRetryCount int64 = 3 // TODO 从配置获取
 )
 
 // Connect 连接到 RabbitMQ 并创建 Exchange
@@ -66,6 +72,39 @@ func createDLX(ch *amqp.Channel) error {
 
 	_, err = ch.QueueDeclare(DLQ, true, false, false, false, nil)
 	return err
+}
+
+func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error {
+	if d.Headers == nil {
+		d.Headers = make(amqp.Table)
+	}
+
+	retryCount, ok := d.Headers[amqpRetryHeaderKey].(int64)
+	if !ok {
+		retryCount = 0
+	}
+
+	retryCount++
+	d.Headers[amqpRetryHeaderKey] = retryCount
+
+	if retryCount > maxRetryCount {
+		log.Info().Str("message_id", d.MessageId).Msg("moving message to dlq")
+		return ch.PublishWithContext(ctx, "", DLQ, false, false, amqp.Publishing{
+			Headers:      d.Headers,
+			ContentType:  "application/json",
+			Body:         d.Body,
+			DeliveryMode: amqp.Persistent,
+		})
+	}
+
+	log.Info().Str("message_id", d.MessageId).Int64("retry_count", retryCount).Msg("retrying message")
+	time.Sleep(time.Second * time.Duration(retryCount))
+	return ch.PublishWithContext(ctx, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
+		Headers:      d.Headers,
+		ContentType:  "application/json",
+		Body:         d.Body,
+		DeliveryMode: amqp.Persistent,
+	})
 }
 
 type RabbitMQHeaderCarrier map[string]any
