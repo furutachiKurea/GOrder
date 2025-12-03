@@ -475,19 +475,20 @@
             const res = await fetch(`/api/customer/${customerID}/orders/${orderID}`);
             const data = await res.json();
 
-            if (!data || !data.data || !data.data.Order) {
+            if (!data || !data.data || !data.data.order) {
                 applyStatusUI('error');
                 setTimeout(getOrder, 7000);
                 return;
             }
 
-            const status = data.data.Order.status;
+            const status = data.data.order.status;
+            console.log(status);
 
             if (status === 'waiting_for_payment') {
                 order.Status = '等待支付...';
                 applyStatusUI('waiting_for_payment');
                 afterPaymentPopup.classList.add('visible');
-                paymentLink.href = data.data.Order.payment_link;
+                paymentLink.href = data.data.order.paymentLink;
                 setTimeout(getOrder, 5000);
             } else if (status === 'paid') {
                 order.Status = '已支付成功，请等待...';

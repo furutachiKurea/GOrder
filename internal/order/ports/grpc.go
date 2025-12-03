@@ -7,6 +7,7 @@ import (
 	"github.com/furutachiKurea/gorder/order/app"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/query"
+	"github.com/furutachiKurea/gorder/order/convertor"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
 	"github.com/rs/zerolog/log"
@@ -26,7 +27,7 @@ func NewGRPCServer(app app.Application) *GRPCServer {
 func (G GRPCServer) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*emptypb.Empty, error) {
 	_, err := G.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
 		CustomerID: request.CustomerId,
-		Items:      request.Items,
+		Items:      convertor.NewItemWithQuantityConvertor().ProtosToDomains(request.Items),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -45,12 +46,17 @@ func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderReque
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	}
 
-	return order.ToProto(), nil
+	return convertor.NewOrderConvertor().DomainToProto(order), nil
 }
 
 func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (*emptypb.Empty, error) {
 	log.Info().Any("request", request).Msg("order_grpc||request_in")
-	newOrder, err := domain.NewOrder(request.ID, request.CustomerId, request.Status, request.PaymentLink, request.Items)
+	newOrder, err := domain.NewOrder(
+		request.ID,
+		request.CustomerId,
+		request.Status,
+		request.PaymentLink,
+		convertor.NewItemConvertor().ProtosToDomains(request.Items))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

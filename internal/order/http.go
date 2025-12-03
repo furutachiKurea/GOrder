@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	client "github.com/furutachiKurea/gorder/common/client/order"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/order/app"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/query"
-
+	"github.com/furutachiKurea/gorder/order/convertor"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,7 +21,7 @@ func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID stri
 	ctx, span := tracing.Start(c, "PostCustomerCustomerIDOrders")
 	defer span.End()
 
-	var req orderpb.CreateOrderRequest // TODO 暂时先直接用 gRPC 的请求结构体
+	var req client.CreateOrderRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -29,7 +29,7 @@ func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID stri
 
 	result, err := H.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
 		CustomerID: customerID,
-		Items:      req.Items,
+		Items:      convertor.NewItemWithQuantityConvertor().OAPIsToDomains(req.Items),
 	})
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerI
 		"message":  "success",
 		"trace_id": tracing.TraceID(ctx),
 		"data": gin.H{
-			"Order": order.ToProto(),
+			"order": convertor.NewOrderConvertor().DomainToOAPI(order),
 		},
 	})
 }

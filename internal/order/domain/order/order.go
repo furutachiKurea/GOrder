@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
-
 	"github.com/stripe/stripe-go/v84"
 )
 
@@ -14,10 +12,10 @@ type Order struct {
 	CustomerID  string
 	Status      string
 	PaymentLink string
-	Items       []*orderpb.Item
+	Items       []*Item
 }
 
-func NewOrder(id, customerID, status, paymentLink string, items []*orderpb.Item) (*Order, error) {
+func NewOrder(id, customerID, status, paymentLink string, items []*Item) (*Order, error) {
 	if id == "" {
 		return nil, errors.New("empty id")
 	}
@@ -43,20 +41,22 @@ func NewOrder(id, customerID, status, paymentLink string, items []*orderpb.Item)
 	}, nil
 }
 
-func (o *Order) ToProto() *orderpb.Order {
-	return &orderpb.Order{
-		ID:          o.ID,
-		CustomerId:  o.CustomerID,
-		Status:      o.Status,
-		PaymentLink: o.PaymentLink,
-		Items:       o.Items,
-	}
-}
-
 func (o *Order) IsPaid() error {
 	if o.Status == string(stripe.CheckoutSessionPaymentStatusPaid) {
 		return nil
 	}
 
 	return fmt.Errorf("order status not paid, order_id=%s, status=%s", o.ID, o.Status)
+}
+
+type Item struct {
+	Id       string
+	Name     string
+	Quantity int32
+	PriceId  string
+}
+
+type ItemWithQuantity struct {
+	Id       string
+	Quantity int32
 }
