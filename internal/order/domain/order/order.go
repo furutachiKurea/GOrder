@@ -53,7 +53,7 @@ type Item struct {
 	Id       string
 	Name     string
 	Quantity int32
-	PriceId  string
+	PriceID  string
 }
 
 type ItemWithQuantity struct {

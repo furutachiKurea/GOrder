@@ -482,13 +482,12 @@
             }
 
             const status = data.data.order.status;
-            console.log(status);
 
             if (status === 'waiting_for_payment') {
                 order.Status = '等待支付...';
                 applyStatusUI('waiting_for_payment');
                 afterPaymentPopup.classList.add('visible');
-                paymentLink.href = data.data.order.paymentLink;
+                paymentLink.href = data.data.order.payment_link;
                 setTimeout(getOrder, 5000);
             } else if (status === 'paid') {
                 order.Status = '已支付成功，请等待...';

@@ -59,11 +59,11 @@ func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (st
 
 	log.Info().
 		Str("payment_link", link).
-		Any("order_id", cmd.Order.ID).
+		Any("order_id", cmd.Order.Id).
 		Msg("create payment link for order")
 
 	newOrder := &orderpb.Order{
-		ID:          cmd.Order.ID,
+		Id:          cmd.Order.Id,
 		CustomerId:  cmd.Order.CustomerId,
 		Status:      "waiting_for_payment",
 		Items:       cmd.Order.Items,

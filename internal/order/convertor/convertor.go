@@ -14,7 +14,7 @@ type OrderConvertor struct{}
 func (c *OrderConvertor) DomainToProto(o *domain.Order) *orderpb.Order {
 	checkNil(o)
 	return &orderpb.Order{
-		ID:          o.ID,
+		Id:          o.ID,
 		CustomerId:  o.CustomerID,
 		Status:      o.Status,
 		PaymentLink: o.PaymentLink,
@@ -25,7 +25,7 @@ func (c *OrderConvertor) DomainToProto(o *domain.Order) *orderpb.Order {
 func (c *OrderConvertor) ProtoToDomain(pb *orderpb.Order) *domain.Order {
 	checkNil(pb)
 	return &domain.Order{
-		ID:          pb.ID,
+		ID:          pb.Id,
 		CustomerID:  pb.CustomerId,
 		Status:      pb.Status,
 		PaymentLink: pb.PaymentLink,
@@ -37,7 +37,7 @@ func (c *OrderConvertor) DomainToOAPI(o *domain.Order) *oapi.Order {
 	checkNil(o)
 	return &oapi.Order{
 		Id:          o.ID,
-		CustomerID:  o.CustomerID,
+		CustomerId:  o.CustomerID,
 		Status:      o.Status,
 		PaymentLink: o.PaymentLink,
 		Items:       NewItemConvertor().DomainsToOAPIs(o.Items),
@@ -47,7 +47,7 @@ func (c *OrderConvertor) DomainToOAPI(o *domain.Order) *oapi.Order {
 func (c *OrderConvertor) OAPIToDomain(oapi oapi.Order) *domain.Order {
 	return &domain.Order{
 		ID:          oapi.Id,
-		CustomerID:  oapi.CustomerID,
+		CustomerID:  oapi.CustomerId,
 		Status:      oapi.Status,
 		PaymentLink: oapi.PaymentLink,
 		Items:       NewItemConvertor().OAPIsToDomains(oapi.Items),
@@ -61,7 +61,7 @@ func (c *ItemConvertor) DomainToProto(e *domain.Item) *orderpb.Item {
 		Id:       e.Id,
 		Name:     e.Name,
 		Quantity: e.Quantity,
-		PriceId:  e.PriceId,
+		PriceId:  e.PriceID,
 	}
 }
 
@@ -70,7 +70,7 @@ func (c *ItemConvertor) ProtoToDomain(pb *orderpb.Item) *domain.Item {
 		Id:       pb.Id,
 		Name:     pb.Name,
 		Quantity: pb.Quantity,
-		PriceId:  pb.PriceId,
+		PriceID:  pb.PriceId,
 	}
 }
 
@@ -79,7 +79,7 @@ func (c *ItemConvertor) DomainToOAPI(e *domain.Item) oapi.Item {
 		Id:       e.Id,
 		Name:     e.Name,
 		Quantity: e.Quantity,
-		PriceID:  e.PriceId,
+		PriceId:  e.PriceID,
 	}
 }
 
@@ -88,7 +88,7 @@ func (c *ItemConvertor) OAPIToDomain(api oapi.Item) *domain.Item {
 		Id:       api.Id,
 		Name:     api.Name,
 		Quantity: api.Quantity,
-		PriceId:  api.PriceID,
+		PriceID:  api.PriceId,
 	}
 }
 

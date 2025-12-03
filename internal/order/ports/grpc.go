@@ -52,7 +52,7 @@ func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderReque
 func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (*emptypb.Empty, error) {
 	log.Info().Any("request", request).Msg("order_grpc||request_in")
 	newOrder, err := domain.NewOrder(
-		request.ID,
+		request.Id,
 		request.CustomerId,
 		request.Status,
 		request.PaymentLink,

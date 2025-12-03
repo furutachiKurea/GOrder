@@ -32,14 +32,14 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 	var items []*stripe.CheckoutSessionLineItemParams
 	for _, item := range order.Items {
 		items = append(items, &stripe.CheckoutSessionLineItemParams{
-			Price:    stripe.String(item.PriceId), // stripe.String(item.PriceId),
+			Price:    stripe.String(item.PriceId),
 			Quantity: stripe.Int64(int64(item.Quantity)),
 		})
 	}
 	marshalledItems, _ := json.Marshal(order.Items)
 
 	metadata := map[string]string{
-		"order_id":    order.ID,
+		"order_id":    order.Id,
 		"customer_id": order.CustomerId,
 		"status":      order.Status,
 		"items":       string(marshalledItems),
@@ -50,7 +50,7 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 		Metadata:   metadata,
 		LineItems:  items,
 		Mode:       stripe.String(stripe.CheckoutSessionModePayment),
-		SuccessURL: stripe.String(fmt.Sprintf("%s?order_id=%s&customer_id=%s", successURL, order.ID, order.CustomerId)),
+		SuccessURL: stripe.String(fmt.Sprintf("%s?order_id=%s&customer_id=%s", successURL, order.Id, order.CustomerId)),
 	}
 
 	result, err := session.New(params)

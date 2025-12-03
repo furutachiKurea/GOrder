@@ -180,7 +180,7 @@ func (x *ItemWithQuantity) GetQuantity() int32 {
 
 type Order struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ID            string                 `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	CustomerId    string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 	PaymentLink   string                 `protobuf:"bytes,5,opt,name=payment_link,json=paymentLink,proto3" json:"payment_link,omitempty"`
@@ -219,9 +219,9 @@ func (*Order) Descriptor() ([]byte, []int) {
 	return file_orderpb_order_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *Order) GetID() string {
+func (x *Order) GetId() string {
 	if x != nil {
-		return x.ID
+		return x.Id
 	}
 	return ""
 }
@@ -339,7 +339,7 @@ const file_orderpb_order_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\"\x98\x01\n" +
 	"\x05Order\x12\x0e\n" +
-	"\x02ID\x18\x01 \x01(\tR\x02ID\x12\x1f\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vcustomer_id\x18\x02 \x01(\tR\n" +
 	"customerId\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12!\n" +
