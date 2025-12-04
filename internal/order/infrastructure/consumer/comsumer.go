@@ -79,11 +79,12 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		return
 	}
 
+	// TODO 这块从 mq 中获取到的订单信息缺失 paymentLink，但是此时订单已经支付成功，应该可以放着不管或者说支付完的订单不需要支付链接
 	log.Debug().Any("unmarshalled_order", o).Msg("unmarshalled order from message")
 	_, err = c.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
 		Order: o,
 		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
-			if err := order.IsPaid(); err != nil {
+			if err = order.IsPaid(); err != nil {
 				return nil, err
 			}
 

@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	maxRetryCount int64 = viper.GetInt64("rabbitmq.max-retry") // TODO 从配置获取
+	maxRetryCount int64 = viper.GetInt64("rabbitmq.max-retry")
 )
 
 // Connect 连接到 RabbitMQ 并创建 Exchange
