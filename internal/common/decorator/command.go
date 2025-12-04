@@ -15,9 +15,9 @@ type CommandHandler[C, R any] interface {
 func ApplyCommandDecorators[C, R any](handler CommandHandler[C, R], logger zerolog.Logger, metricsClient MetricsClient) CommandHandler[C, R] {
 	// queryLoggingDecorator, queryMetricsDecorator 均实现了 QueryHandler 接口，故可实现对于 handler 的装饰
 	// 装饰器的顺序决定了调用链的顺序，最外层的装饰器最先被调用, defer 最后被调用
-	return queryLoggingDecorator[C, R]{
+	return commandLoggingDecorator[C, R]{
 		logger: logger,
-		base: queryMetricsDecorator[C, R]{
+		base: commandMetricsDecorator[C, R]{
 			base:   handler,
 			client: metricsClient,
 		},

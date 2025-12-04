@@ -31,3 +31,24 @@ func (q queryMetricsDecorator[C, R]) Handle(ctx context.Context, cmd C) (result 
 	}()
 	return q.base.Handle(ctx, cmd)
 }
+
+type commandMetricsDecorator[C, R any] struct {
+	base   CommandHandler[C, R]
+	client MetricsClient
+}
+
+func (r commandMetricsDecorator[C, R]) Handle(ctx context.Context, cmd C) (result R, err error) {
+	start := time.Now()
+	actionName := strings.ToLower(generateActionName(cmd))
+
+	defer func() {
+		end := time.Since(start)
+		r.client.Inc(fmt.Sprintf("command.%s.duration", actionName), int(end.Seconds()))
+		if err == nil {
+			r.client.Inc(fmt.Sprintf("command.%s.success", actionName), 1)
+		} else {
+			r.client.Inc(fmt.Sprintf("command.%s.failure", actionName), 1)
+		}
+	}()
+	return r.base.Handle(ctx, cmd)
+}
