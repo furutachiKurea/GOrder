@@ -78,10 +78,11 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		return nil, fmt.Errorf("validate order items: %w", err)
 	}
 
-	order, err := c.orderRepo.Create(ctx, &domain.Order{
-		CustomerID: cmd.CustomerID,
-		Items:      validItems,
-	})
+	pendingOrder, err := domain.NewPendingOrder(cmd.CustomerID, validItems)
+	if err != nil {
+		return nil, err
+	}
+	order, err := c.orderRepo.Create(ctx, pendingOrder)
 	if err != nil {
 		return nil, fmt.Errorf("create order: %w", err)
 	}

@@ -41,6 +41,24 @@ func NewOrder(id, customerID, status, paymentLink string, items []*Item) (*Order
 	}, nil
 }
 
+// NewPendingOrder 创建一个待支付的订单，作为 payment 对新建订单进行消费前的状态,
+// 刚创建的订单状态为 "pending"
+func NewPendingOrder(customerID string, items []*Item) (*Order, error) {
+	if customerID == "" {
+		return nil, errors.New("empty customerID")
+	}
+
+	if len(items) == 0 {
+		return nil, errors.New("items cannot be nil or empty")
+	}
+
+	return &Order{
+		CustomerID: customerID,
+		Status:     "pending",
+		Items:      items,
+	}, nil
+}
+
 func (o *Order) IsPaid() error {
 	if o.Status == string(stripe.CheckoutSessionPaymentStatusPaid) {
 		return nil
