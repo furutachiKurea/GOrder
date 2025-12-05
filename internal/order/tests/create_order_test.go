@@ -32,8 +32,12 @@ func TestCreateOrder_success(t *testing.T) {
 		CustomerId: "9966",
 		Items: []sw.ItemWithQuantity{
 			{
-				Id:       "test-item-1",
-				Quantity: 1,
+				Id:       "prod_TWDvBbvb2pbeAH",
+				Quantity: 10,
+			},
+			{
+				Id:       "prod_TVnO9uSrHVoLIa",
+				Quantity: 9,
 			},
 		},
 	})

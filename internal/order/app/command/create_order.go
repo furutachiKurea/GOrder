@@ -14,6 +14,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 )
 
@@ -78,6 +79,10 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		return nil, fmt.Errorf("validate order items: %w", err)
 	}
 
+	log.Debug().
+		Int("validItems", len(validItems)).
+		Msg("get valid items for stock")
+
 	pendingOrder, err := domain.NewPendingOrder(cmd.CustomerID, validItems)
 	if err != nil {
 		return nil, err
@@ -120,9 +125,14 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 
 	items = packItems(items)
 
+	log.Debug().Any("items", items).Msg("packed items")
 	resp, err := c.stockGRPC.CheckIfItemsInStock(ctx, convertor.NewItemWithQuantityConvertor().DomainsToProtos(items))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("check items in stock: %w", err)
+	}
+
+	if len(resp.Items) == 0 {
+		return nil, errors.New("no valid items in order")
 	}
 	return convertor.NewItemConvertor().ProtosToDomains(resp.Items), nil
 }

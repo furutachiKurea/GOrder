@@ -4,41 +4,40 @@ import (
 	"context"
 	"sync"
 
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 )
 
 // stub data
-var stub = map[string]*orderpb.Item{
+var stub = map[string]*domain.Item{
 	"item_id": {
 		Id:       "foo_item",
 		Name:     "stub_item",
 		Quantity: 100000000,
-		PriceId:  "price_id",
+		PriceID:  "price_id",
 	},
 	"item1": {
 		Id:       "item1",
 		Name:     "stub item 1",
 		Quantity: 1000000,
-		PriceId:  "stub_item1_price_id",
+		PriceID:  "stub_item1_price_id",
 	},
 	"item2": {
 		Id:       "item2",
 		Name:     "stub item 2",
 		Quantity: 1000000,
-		PriceId:  "stub_item2_price_id",
+		PriceID:  "stub_item2_price_id",
 	},
 	"item3": {
 		Id:       "item3",
 		Name:     "stub item 3",
 		Quantity: 1000000,
-		PriceId:  "stub_item3_price_id",
+		PriceID:  "stub_item3_price_id",
 	},
 }
 
 type MemoryStockRepository struct {
 	lock  *sync.RWMutex
-	store map[string]*orderpb.Item
+	store map[string]*domain.Item
 }
 
 func NewMemoryStockRepository() *MemoryStockRepository {
@@ -48,12 +47,12 @@ func NewMemoryStockRepository() *MemoryStockRepository {
 	}
 }
 
-func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*orderpb.Item, error) {
+func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*domain.Item, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	var (
-		res        []*orderpb.Item
+		res        []*domain.Item
 		missingIDs []string
 	)
 

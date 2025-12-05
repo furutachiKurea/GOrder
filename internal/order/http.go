@@ -10,7 +10,6 @@ import (
 	"github.com/furutachiKurea/gorder/order/app/dto"
 	"github.com/furutachiKurea/gorder/order/app/query"
 	"github.com/furutachiKurea/gorder/order/convertor"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +32,6 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 	if err = c.ShouldBind(&req); err != nil {
 		return
 	}
-
 	result, err := H.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrder{
 		CustomerID: customerID,
 		Items:      convertor.NewItemWithQuantityConvertor().OAPIsToDomains(req.Items),

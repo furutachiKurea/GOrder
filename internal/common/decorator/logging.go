@@ -30,7 +30,8 @@ func (q queryLoggingDecorator[C, R]) Handle(ctx context.Context, cmd C) (result 
 		}
 	}()
 
-	return q.base.Handle(ctx, cmd)
+	result, err = q.base.Handle(ctx, cmd)
+	return result, err
 }
 
 type commandLoggingDecorator[C, R any] struct {
@@ -38,9 +39,9 @@ type commandLoggingDecorator[C, R any] struct {
 	base   QueryHandler[C, R]
 }
 
-func (r commandLoggingDecorator[C, R]) Handle(ctx context.Context, cmd C) (result R, err error) {
+func (c commandLoggingDecorator[C, R]) Handle(ctx context.Context, cmd C) (result R, err error) {
 	body, _ := json.Marshal(cmd)
-	logger := r.logger.With().
+	logger := c.logger.With().
 		Str("command", generateActionName(cmd)).
 		Str("command_body", string(body)).
 		Logger()
@@ -53,7 +54,8 @@ func (r commandLoggingDecorator[C, R]) Handle(ctx context.Context, cmd C) (resul
 		}
 	}()
 
-	return r.base.Handle(ctx, cmd)
+	result, err = c.base.Handle(ctx, cmd)
+	return result, err
 }
 
 func generateActionName(cmd any) string {

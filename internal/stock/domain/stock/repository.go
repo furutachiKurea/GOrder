@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 )
 
 type Repository interface {
-	GetItems(ctx context.Context, ids []string) ([]*orderpb.Item, error)
+	GetItems(ctx context.Context, ids []string) ([]*Item, error)
 }
 
 type NotFoundError struct {

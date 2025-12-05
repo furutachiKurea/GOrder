@@ -12,6 +12,7 @@ import (
 	"github.com/furutachiKurea/gorder/stock/ports"
 	"github.com/furutachiKurea/gorder/stock/service"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
