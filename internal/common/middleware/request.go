@@ -42,9 +42,16 @@ func requestOut(c *gin.Context, l zerolog.Logger) {
 	start, _ := c.Get("request_start")
 	startTime := start.(time.Time)
 
+	// response 可能未设置（如 404 或中间件提前终止），避免对 nil 做断言
+	respBytes, _ := resp.([]byte)
+	respStr := ""
+	if respBytes != nil {
+		respStr = string(respBytes)
+	}
+
 	l.Info().
 		Int("status_code", c.Writer.Status()).
 		Int64("proc_time_ms", time.Since(startTime).Milliseconds()).
-		Str("response", string(resp.([]byte))).
+		Str("response", respStr).
 		Msg("__request_out")
 }

@@ -50,7 +50,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	<-forever
 }
 
-// handleMessage 处理接收到的订单创建消息，创建支付链接
+// handleMessage 处理接收到的订单创建消息，并将更新后的订单状态储存到数据库
 func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Queue) {
 	log.Info().
 		Str("msg", string(msg.Body)).

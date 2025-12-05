@@ -36,14 +36,14 @@ func Connect(user, password, host, port string) (ch *amqp.Channel, closeCoon fun
 		log.Fatal().Err(err).Msg("failed to get open RabbitMQ channel")
 	}
 
-	if err := ch.ExchangeDeclare(
+	if err = ch.ExchangeDeclare(
 		EventOrderCreated, amqp.ExchangeDirect,
 		true, false, false, false, nil,
 	); err != nil {
 		log.Fatal().Err(err).Str("exchange", EventOrderCreated).Msg("failed to declare exchange")
 	}
 
-	if err := ch.ExchangeDeclare(
+	if err = ch.ExchangeDeclare(
 		EventOrderPaid, amqp.ExchangeFanout,
 		true, false, false, false, nil,
 	); err != nil {
