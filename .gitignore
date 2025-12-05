@@ -29,3 +29,4 @@
 !*.sh
 !Makefile
 !*.html
+!*.sql
