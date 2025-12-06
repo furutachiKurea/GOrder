@@ -70,3 +70,8 @@ func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*d
 
 	return res, nil
 }
+
+func (m MemoryStockRepository) GetStock(ctx context.Context, ids []string) ([]*domain.ItemWithQuantity, error) {
+	// TODO implement me
+	panic("implement me")
+}

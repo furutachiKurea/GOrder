@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common"
@@ -10,6 +11,7 @@ import (
 	"github.com/furutachiKurea/gorder/order/app/dto"
 	"github.com/furutachiKurea/gorder/order/app/query"
 	"github.com/furutachiKurea/gorder/order/convertor"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,6 +32,9 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 	}()
 
 	if err = c.ShouldBind(&req); err != nil {
+		return
+	}
+	if err = H.validateCreateOrderRequest(req); err != nil {
 		return
 	}
 	result, err := H.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrder{
@@ -68,4 +73,14 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 	resp = dto.GetCustomerOrderResp{
 		Order: convertor.NewOrderConvertor().DomainToOAPI(order),
 	}
+}
+
+func (H HTTPServer) validateCreateOrderRequest(req client.CreateOrderRequest) error {
+	for _, i := range req.Items {
+		if i.Quantity <= 0 {
+			return errors.New("quantity must be positive")
+		}
+	}
+
+	return nil
 }
