@@ -45,6 +45,10 @@ func NewMySQL() *MySQL {
 	return &MySQL{db: db}
 }
 
+func (d MySQL) StartTransaction(fc func(tx *gorm.DB) error) error {
+	return d.db.Transaction(fc)
+}
+
 // BatchGetStockByID 从数据库中使用 product IDs 批量获取库存信息
 func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) ([]StockModel, error) {
 	var res []StockModel

@@ -2,11 +2,19 @@ package query
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/handler/redis"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+)
+
+const (
+	redisLockPrefix = "check_stock_"
 )
 
 type CheckIfItemsInStock struct {
@@ -50,9 +58,14 @@ var stub = map[string]string{
 }
 
 func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*domain.Item, error) {
-	if err := h.checkStock(ctx, query.Items); err != nil {
+	if err := lock(ctx, getLockKey(query)); err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := unlock(ctx, getLockKey(query)); err != nil {
+			log.Warn().Err(err).Msg("redis unlock fail")
+		}
+	}()
 
 	// 从 stripe 获取 priceID
 	var res []*domain.Item
@@ -69,11 +82,32 @@ func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfIte
 		})
 	}
 
-	// TODO 库存扣减
+	// TODO 在查询库存是否足够之后就扣除库存，没有处理当用户没有实际支付成功的情况
+	if err := h.checkStock(ctx, query.Items); err != nil {
+		return nil, err
+	}
+
 	return res, nil
 }
 
-// checkStock 检查库存是否充足，该方法会处理重复的 item，调用时可以不用合并 item
+func lock(ctx context.Context, key string) error {
+	return redis.SetNX(ctx, redis.LocalClient(), key, "1", 5*time.Minute)
+}
+
+func unlock(ctx context.Context, key string) error {
+	return redis.Del(ctx, redis.LocalClient(), key)
+}
+
+func getLockKey(query CheckIfItemsInStock) string {
+	var ids []string
+	for _, item := range query.Items {
+		ids = append(ids, item.Id)
+	}
+
+	return redisLockPrefix + strings.Join(ids, "_")
+}
+
+// checkStock 检查库存是否充足并尝试扣除库存，该方法会处理重复的 item，调用时可以不用合并 item
 func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*domain.ItemWithQuantity) error {
 	var ids []string
 	for _, item := range query {
@@ -89,18 +123,21 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 	for _, r := range records {
 		idQuantityMap[r.Id] = r.Quantity
 	}
-
-	var failedOn []struct {
-		ID   string
-		Want int32
-		Have int32
-	}
+	var (
+		ok       = true
+		failedOn []struct {
+			ID   string
+			Want int32
+			Have int32
+		}
+	)
 
 	// 合并相同商品数量
 	query = packItems(query)
 
 	for _, item := range query {
 		if item.Quantity > idQuantityMap[item.Id] {
+			ok = false
 			failedOn = append(failedOn, struct {
 				ID   string
 				Want int32
@@ -112,11 +149,28 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 			})
 		}
 	}
-
-	if len(failedOn) > 0 {
-		return domain.ExceedStockError{FailedOn: failedOn}
+	if ok {
+		return h.stockRepo.UpdateStock(ctx, query, func(
+			ctx context.Context,
+			existing,
+			require []*domain.ItemWithQuantity,
+		) ([]*domain.ItemWithQuantity, error) {
+			var updated []*domain.ItemWithQuantity
+			for _, e := range existing {
+				for _, r := range require {
+					if e.Id == r.Id {
+						updated = append(updated, &domain.ItemWithQuantity{
+							Id:       e.Id,
+							Quantity: e.Quantity - r.Quantity,
+						})
+					}
+				}
+			}
+			return updated, nil
+		})
 	}
-	return nil
+
+	return domain.ExceedStockError{FailedOn: failedOn}
 }
 
 // packItems 合并相同商品的数量

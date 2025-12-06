@@ -10,3 +10,7 @@ CREATE TABLE `o_stock` (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品库存表';
+
+INSERT INTO `o_stock` (product_id, quantity) VALUES
+('prod_TYIEBm3KnCRJn0', 100),
+('prod_TWDvBbvb2pbeAH', 200);

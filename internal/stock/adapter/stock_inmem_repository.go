@@ -40,6 +40,16 @@ type MemoryStockRepository struct {
 	store map[string]*domain.Item
 }
 
+func (m MemoryStockRepository) UpdateStock(ctx context.Context, data []*domain.ItemWithQuantity,
+	updateFn func(ctx context.Context,
+		existing []*domain.ItemWithQuantity,
+		query []*domain.ItemWithQuantity,
+	) ([]*domain.ItemWithQuantity, error),
+) error {
+	// TODO implement me
+	panic("implement me")
+}
+
 func NewMemoryStockRepository() *MemoryStockRepository {
 	return &MemoryStockRepository{
 		lock:  &sync.RWMutex{},
