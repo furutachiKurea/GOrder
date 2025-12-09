@@ -1,11 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common"
-	client "github.com/furutachiKurea/gorder/common/client/order"
+	oapi "github.com/furutachiKurea/gorder/common/client/order"
+	"github.com/furutachiKurea/gorder/common/consts"
+	"github.com/furutachiKurea/gorder/common/handler/errors"
 	"github.com/furutachiKurea/gorder/order/app"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/dto"
@@ -22,7 +23,7 @@ type HTTPServer struct {
 
 func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID string) {
 	var (
-		req  client.CreateOrderRequest
+		req  oapi.CreateOrderRequest
 		resp dto.CreateOrderResp
 		err  error
 	)
@@ -32,9 +33,11 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 	}()
 
 	if err = c.ShouldBind(&req); err != nil {
+		err = errors.NewWithError(consts.ErrnoBindRequestError, err)
 		return
 	}
 	if err = H.validateCreateOrderRequest(req); err != nil {
+		err = errors.NewWithError(consts.ErrnoRequestValidateError, err)
 		return
 	}
 	result, err := H.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrder{
@@ -42,6 +45,7 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 		Items:      convertor.NewItemWithQuantityConvertor().OAPIsToDomains(req.Items),
 	})
 	if err != nil {
+		err = errors.NewWithError(consts.ErrnoInternalError, err)
 		return
 	}
 	resp = dto.CreateOrderResp{
@@ -67,6 +71,7 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 	})
 
 	if err != nil {
+		err = errors.NewWithError(consts.ErrnoInternalError, err)
 		return
 	}
 
@@ -75,10 +80,10 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 	}
 }
 
-func (H HTTPServer) validateCreateOrderRequest(req client.CreateOrderRequest) error {
+func (H HTTPServer) validateCreateOrderRequest(req oapi.CreateOrderRequest) error {
 	for _, i := range req.Items {
 		if i.Quantity <= 0 {
-			return errors.New("quantity must be positive")
+			return fmt.Errorf("quantity must be positive, got %d from %s", i.Quantity, i.Id)
 		}
 	}
 

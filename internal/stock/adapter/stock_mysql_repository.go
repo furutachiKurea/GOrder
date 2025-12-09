@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"fmt"
 
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 	"github.com/furutachiKurea/gorder/stock/infrastructure/persistent"
@@ -25,7 +26,7 @@ func (s StockRepositoryMySQL) GetItems(ctx context.Context, ids []string) ([]*do
 func (s StockRepositoryMySQL) GetStock(ctx context.Context, ids []string) ([]*domain.ItemWithQuantity, error) {
 	data, err := s.db.BatchGetStockByID(ctx, ids)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("batch get stock by id: %w", err)
 	}
 
 	var result []*domain.ItemWithQuantity
@@ -60,7 +61,7 @@ func (s StockRepositoryMySQL) UpdateStock(
 			tableName = "o_stock"
 		)
 		if err = tx.Table(tableName).Where("product_id IN ?", getIDsFromItems(data)).Find(&dest).Error; err != nil {
-			return err
+			return fmt.Errorf("get stock by ids from db: %w", err)
 		}
 
 		existing := s.unmarshalFromModels(dest)
@@ -74,7 +75,7 @@ func (s StockRepositoryMySQL) UpdateStock(
 			if err = tx.Table(tableName).
 				Where("product_id = ?", upd.Id).
 				Update("quantity", upd.Quantity).Error; err != nil {
-				return err
+				return fmt.Errorf("update stock in db: %w", err)
 			}
 		}
 

@@ -2,9 +2,11 @@ package common
 
 import (
 	"encoding/json"
-	"net/http"
 
+	"github.com/furutachiKurea/gorder/common/consts"
+	"github.com/furutachiKurea/gorder/common/handler/errors"
 	"github.com/furutachiKurea/gorder/common/tracing"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,27 +28,29 @@ func (b *BaseResponse) Response(c *gin.Context, err error, data any) {
 }
 
 func (b *BaseResponse) success(c *gin.Context, data any) {
+	errno, errMsg := errors.Output(nil)
 	r := response{
-		Errno:   0,
-		Message: "success",
+		Errno:   errno,
+		Message: errMsg,
 		Data:    data,
 		TraceID: tracing.TraceID(c.Request.Context()),
 	}
 
 	resp, _ := json.Marshal(r)
 	c.Set("response", resp)
-	c.JSON(http.StatusOK, r)
+	c.JSON(consts.HTTPStatus(errno), r)
 }
 
 func (b *BaseResponse) error(c *gin.Context, err error) {
+	errno, errMsg := errors.Output(err)
 	r := response{
-		Errno:   2,
-		Message: err.Error(),
+		Errno:   errno,
+		Message: errMsg,
 		Data:    nil,
 		TraceID: tracing.TraceID(c.Request.Context()),
 	}
 
 	resp, _ := json.Marshal(r)
 	c.Set("response", resp)
-	c.JSON(http.StatusOK, r)
+	c.JSON(consts.HTTPStatus(errno), r)
 }

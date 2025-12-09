@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -59,7 +60,7 @@ var stub = map[string]string{
 
 func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*domain.Item, error) {
 	if err := lock(ctx, getLockKey(query)); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("redis lock, key=%s: %w", getLockKey(query), err)
 	}
 	defer func() {
 		if err := unlock(ctx, getLockKey(query)); err != nil {

@@ -29,10 +29,11 @@ func requestIn(c *gin.Context, l zerolog.Logger) {
 	_ = json.Compact(&compactJson, bodyBytes)
 
 	l.Info().
+		Str("uri", c.Request.RequestURI).
+		Str("method", c.Request.Method).
+		Str("from", c.RemoteIP()).
 		Time("start", time.Now()).
 		Str("body", compactJson.String()).
-		Str("from", c.RemoteIP()).
-		Str("uri", c.Request.RequestURI).
 		Msg("__request_in")
 
 }

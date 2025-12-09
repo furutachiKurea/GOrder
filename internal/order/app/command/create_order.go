@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc/status"
 )
 
 type CreateOrder struct {
@@ -108,7 +109,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		Headers:      header,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("publish event error q.Name=%s, err:%w", q.Name, err)
 	}
 
 	return &CreateOrderResult{
@@ -128,7 +129,7 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 	log.Debug().Any("items", items).Msg("packed items")
 	resp, err := c.stockGRPC.CheckIfItemsInStock(ctx, convertor.NewItemWithQuantityConvertor().DomainsToProtos(items))
 	if err != nil {
-		return nil, fmt.Errorf("check items in stock: %w", err)
+		return nil, status.Convert(err).Err()
 	}
 
 	if len(resp.Items) == 0 {
