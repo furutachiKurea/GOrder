@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	SockModelTable = "o_stock"
+)
+
 type StockModel struct {
 	ID        int64     `gorm:"column:id"`
 	ProductID string    `gorm:"column:product_id"`
@@ -20,7 +24,7 @@ type StockModel struct {
 }
 
 func (s StockModel) TableName() string {
-	return "o_stock"
+	return SockModelTable
 }
 
 type MySQL struct {
@@ -45,6 +49,10 @@ func NewMySQL() *MySQL {
 	return &MySQL{db: db}
 }
 
+func NewMySQLWithDB(db *gorm.DB) *MySQL {
+	return &MySQL{db: db}
+}
+
 func (d MySQL) StartTransaction(fc func(tx *gorm.DB) error) error {
 	return d.db.Transaction(fc)
 }
@@ -58,4 +66,8 @@ func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) ([]St
 	}
 
 	return res, nil
+}
+
+func (d MySQL) CreateBatch(ctx context.Context, create []*StockModel) error {
+	return gorm.G[*StockModel](d.db).CreateInBatches(ctx, &create, 100)
 }

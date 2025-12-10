@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	GetItems(ctx context.Context, ids []string) ([]*Item, error)
 	GetStock(ctx context.Context, ids []string) ([]*ItemWithQuantity, error)
+	// UpdateStock 更新库存，updateFn 接收 existing item , 应返回 item 的期望状态
 	UpdateStock(
 		ctx context.Context,
 		data []*ItemWithQuantity,
