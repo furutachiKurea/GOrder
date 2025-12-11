@@ -107,7 +107,7 @@ components:
           type: string
         quantity:
           type: integer
-          format: int32
+          format: int64
         price_id:
           type: string
 
@@ -134,7 +134,7 @@ components:
             type: string
           quantity:
             type: integer
-            format: int32
+            format: int64
 
     Response:
         type: object

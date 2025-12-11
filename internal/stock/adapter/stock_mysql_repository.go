@@ -80,7 +80,7 @@ func (s StockRepositoryMySQL) UpdateStock(
 			return err
 		}
 
-		queryMap := make(map[string]int32)
+		queryMap := make(map[string]int64)
 		for _, item := range data {
 			queryMap[item.Id] += item.Quantity
 		}
@@ -88,8 +88,8 @@ func (s StockRepositoryMySQL) UpdateStock(
 		var (
 			failedOn []struct {
 				ID   string
-				Want int32
-				Have int32
+				Want int64
+				Have int64
 			}
 			failedProductIDs []string
 		)
@@ -110,8 +110,8 @@ func (s StockRepositoryMySQL) UpdateStock(
 				failedProductIDs = append(failedProductIDs, upd.Id)
 				failedOn = append(failedOn, struct {
 					ID   string
-					Want int32
-					Have int32
+					Want int64
+					Have int64
 				}{ID: upd.Id, Want: toDeduct, Have: 0})
 			}
 		}
@@ -126,7 +126,7 @@ func (s StockRepositoryMySQL) UpdateStock(
 				return fmt.Errorf("get failed stocks from db: %w", err)
 			}
 
-			stockHave := make(map[string]int32)
+			stockHave := make(map[string]int64)
 			for _, stock := range failedStocks {
 				stockHave[stock.ProductID] = stock.Quantity
 			}

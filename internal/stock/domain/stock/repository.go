@@ -31,8 +31,8 @@ func (e NotFoundError) Error() string {
 type ExceedStockError struct {
 	FailedOn []struct {
 		ID   string
-		Want int32
-		Have int32
+		Want int64
+		Have int64
 	}
 }
 

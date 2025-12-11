@@ -23,7 +23,6 @@ func RunHTTPServerOnAddr(addr string, wrapper func(router *gin.Engine)) {
 	apiRouter := gin.New()
 	setMiddlewares(apiRouter)
 	wrapper(apiRouter)
-	apiRouter.Group("/api") // TODO 没用啊这里
 	if err := apiRouter.Run(addr); err != nil {
 		panic(err)
 	}

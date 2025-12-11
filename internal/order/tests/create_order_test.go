@@ -8,6 +8,7 @@ import (
 
 	sw "github.com/furutachiKurea/gorder/common/client/order"
 	_ "github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/consts"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func TestCreateOrder_success(t *testing.T) {
 				Quantity: 10,
 			},
 			{
-				Id:       "prod_TVnO9uSrHVoLIa",
+				Id:       "prod_TYIEBm3KnCRJn0",
 				Quantity: 9,
 			},
 		},
@@ -52,8 +53,7 @@ func TestCreateOrder_invalidParams(t *testing.T) {
 		CustomerId: "9966",
 		Items:      nil,
 	})
-	assert.Equal(t, 200, response.StatusCode())
-	assert.Equal(t, 2, response.JSON200.Errno)
+	assert.Equal(t, consts.HTTPStatus(consts.ErrnoInternalError), response.StatusCode())
 }
 
 func getResponse(t *testing.T, customerID string, body sw.PostCustomerCustomerIdOrdersJSONRequestBody) *sw.PostCustomerCustomerIdOrdersResponse {

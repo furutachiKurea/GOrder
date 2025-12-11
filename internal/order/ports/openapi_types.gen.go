@@ -19,13 +19,13 @@ type Item struct {
 	Id       string `json:"id"`
 	Name     string `json:"name"`
 	PriceId  string `json:"price_id"`
-	Quantity int32  `json:"quantity"`
+	Quantity int64  `json:"quantity"`
 }
 
 // ItemWithQuantity defines model for ItemWithQuantity.
 type ItemWithQuantity struct {
 	Id       string `json:"id"`
-	Quantity int32  `json:"quantity"`
+	Quantity int64  `json:"quantity"`
 }
 
 // Order defines model for Order.

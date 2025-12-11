@@ -70,11 +70,11 @@ func (o *Order) IsPaid() error {
 type Item struct {
 	Id       string
 	Name     string
-	Quantity int32
+	Quantity int64
 	PriceID  string
 }
 
 type ItemWithQuantity struct {
 	Id       string
-	Quantity int32
+	Quantity int64
 }

@@ -18,7 +18,7 @@ const (
 type StockModel struct {
 	ID        int64     `gorm:"column:id"`
 	ProductID string    `gorm:"column:product_id"`
-	Quantity  int32     `gorm:"column:quantity"`
+	Quantity  int64     `gorm:"column:quantity"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at"`
 }

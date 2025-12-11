@@ -78,7 +78,7 @@ func TestStockRepositoryMySQL_UpdateStock_Race(t *testing.T) {
 	err := db.CreateBatch(ctx, []*persistent.StockModel{
 		{
 			ProductID: testItem,
-			Quantity:  int32(initialStock),
+			Quantity:  int64(initialStock),
 		},
 	})
 	assert.NoError(t, err)
@@ -105,7 +105,7 @@ func TestStockRepositoryMySQL_UpdateStock_Race(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	expected := initialStock - concurrentGoroutines
-	assert.Equal(t, int32(expected), res[0].Quantity)
+	assert.Equal(t, int64(expected), res[0].Quantity)
 }
 
 func TestStockRepositoryMySQL_UpdateStock_OverSell(t *testing.T) {
@@ -120,7 +120,7 @@ func TestStockRepositoryMySQL_UpdateStock_OverSell(t *testing.T) {
 	err := db.CreateBatch(ctx, []*persistent.StockModel{
 		{
 			ProductID: testItem,
-			Quantity:  int32(initialStock),
+			Quantity:  int64(initialStock),
 		},
 	})
 	assert.NoError(t, err)
@@ -145,7 +145,7 @@ func TestStockRepositoryMySQL_UpdateStock_OverSell(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res)
 	t.Log("stock remain: ", res[0].Quantity)
-	assert.GreaterOrEqual(t, res[0].Quantity, int32(0))
+	assert.GreaterOrEqual(t, res[0].Quantity, int64(0))
 }
 
 func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {

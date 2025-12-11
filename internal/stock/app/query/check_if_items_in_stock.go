@@ -120,7 +120,7 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 		return err
 	}
 
-	idQuantityMap := make(map[string]int32)
+	idQuantityMap := make(map[string]int64)
 	for _, r := range records {
 		idQuantityMap[r.Id] = r.Quantity
 	}
@@ -128,8 +128,8 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 		ok       = true
 		failedOn []struct {
 			ID   string
-			Want int32
-			Have int32
+			Want int64
+			Have int64
 		}
 	)
 
@@ -141,8 +141,8 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 			ok = false
 			failedOn = append(failedOn, struct {
 				ID   string
-				Want int32
-				Have int32
+				Want int64
+				Have int64
 			}{
 				ID:   item.Id,
 				Want: item.Quantity,
@@ -176,7 +176,7 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 
 // packItems 合并相同商品的数量
 func packItems(items []*domain.ItemWithQuantity) []*domain.ItemWithQuantity {
-	merged := make(map[string]int32)
+	merged := make(map[string]int64)
 	for _, item := range items {
 		merged[item.Id] += item.Quantity
 	}

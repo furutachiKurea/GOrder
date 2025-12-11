@@ -140,7 +140,7 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 
 // packItems 合并相同商品的数量
 func packItems(items []*domain.ItemWithQuantity) []*domain.ItemWithQuantity {
-	merged := make(map[string]int32)
+	merged := make(map[string]int64)
 	for _, item := range items {
 		merged[item.Id] += item.Quantity
 	}
