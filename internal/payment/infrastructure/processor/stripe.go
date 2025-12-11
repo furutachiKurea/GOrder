@@ -43,7 +43,6 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 		"customer_id": order.CustomerId,
 		"status":      order.Status,
 		"items":       string(marshalledItems),
-		// "payment_link": order.PaymentLink, TODO 我觉着这个不应该放在metadata里，payment_link 此时还没有生成
 	}
 
 	params := &stripe.CheckoutSessionParams{

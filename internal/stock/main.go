@@ -52,7 +52,7 @@ func main() {
 			stockpb.RegisterStockServiceServer(server, svc)
 		})
 	case "http":
-		// TODO implement
+		log.Panic().Str("serverType", serverType).Msg("unsupported server type")
 	default:
 		log.Panic().Str("serverType", serverType).Msg("unsupported server type")
 	}

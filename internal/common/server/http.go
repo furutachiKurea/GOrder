@@ -12,8 +12,8 @@ import (
 func RunHTTPServer(serviceName string, wrapper func(router *gin.Engine)) {
 	addr := viper.Sub(serviceName).Get("http-addr")
 	if addr == nil {
-		// TODO warning log
 		addr = viper.Get("fallback-http-addr")
+		log.Warn().Str("fallback", addr.(string)).Msg("http server addr is nil, use fallback-http-addr instead")
 	}
 
 	RunHTTPServerOnAddr(addr.(string), wrapper)

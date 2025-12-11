@@ -82,7 +82,6 @@ linters:
           arguments:
             - []
             - ["GRPC", "WAL"]
-        # TODO: enable the following rules
         - name: exported
           disabled: true
         - name: unexported-return
@@ -90,8 +89,8 @@ linters:
     staticcheck:
       checks:
         - all
-        - -SA1019 # TODO(fix) Using a deprecated function, variable, constant or field
-        - -SA2002 # TODO(fix) Called testing.T.FailNow or SkipNow in a goroutine, which isn’t allowed
+        - -SA1019
+        - -SA2002
   exclusions:
     # Excluding configuration per-path, per-linter, per-text and per-source
     rules:

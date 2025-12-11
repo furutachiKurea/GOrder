@@ -17,11 +17,11 @@ type UpdateOrder struct {
 	UpdateFn func(ctx context.Context, order *domain.Order) (*domain.Order, error)
 }
 
+// UpdateOrderHandler 使用给定的 UpdateFn 更新订单
 type UpdateOrderHandler decorator.CommandHandler[UpdateOrder, any]
 
 type updateOrderHandler struct {
 	orderRepo domain.Repository
-	// TODO stock gRPC
 }
 
 func NewUpdateOrderHandler(
@@ -50,8 +50,6 @@ func (c updateOrderHandler) Handle(ctx context.Context, cmd UpdateOrder) (any, e
 			return order, nil
 		}
 	}
-
-	// TODO 为什么没有查询库存再更新订单？
 
 	if err := c.orderRepo.Update(ctx, cmd.Order, cmd.UpdateFn); err != nil {
 		return nil, fmt.Errorf("create order: %w", err)

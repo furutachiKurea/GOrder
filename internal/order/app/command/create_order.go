@@ -28,6 +28,7 @@ type CreateOrderResult struct {
 	OrderID string
 }
 
+// CreateOrderHandler 创建订单，校验库存后发布订单创建事件到 RabbitMQ
 type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult]
 
 type createOrderHandler struct {
@@ -93,7 +94,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		return nil, fmt.Errorf("create order: %w", err)
 	}
 
-	// TODO orderpb 生成的 Order struct tag 与 Go 默认序列化生成的 json 字段名不同，需要转换成 proto 版本的 Order 再序列化。
+	// 服务间通信使用 protobuf 格式
 	marshalledOrder, err := json.Marshal(convertor.NewOrderConvertor().DomainToProto(order))
 	if err != nil {
 		return nil, err

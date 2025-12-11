@@ -11,23 +11,25 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var stub = []*domain.Order{
+	{
+		ID:          "fake-ID",
+		CustomerID:  "fake-customer-id",
+		Status:      "fake-status",
+		PaymentLink: "fake-payment-link",
+		Items:       nil,
+	},
+}
+
 type MemoryOrderRepository struct {
 	lock  *sync.RWMutex
 	store []*domain.Order
 }
 
 func NewMemoryOrderRepository() *MemoryOrderRepository {
-	s := make([]*domain.Order, 0)
-	s = append(s, &domain.Order{
-		ID:          "fake-ID",
-		CustomerID:  "fake-customer-id",
-		Status:      "fake-status",
-		PaymentLink: "fake-payment-link",
-		Items:       nil,
-	})
 	return &MemoryOrderRepository{
 		lock:  &sync.RWMutex{},
-		store: s, // TODO remove hard code data, replace to make([]*domain.Order, 0),
+		store: stub,
 	}
 }
 

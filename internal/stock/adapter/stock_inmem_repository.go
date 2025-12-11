@@ -75,7 +75,7 @@ func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*d
 	}
 
 	if len(res) != len(ids) {
-		return res, domain.NotFoundError{Missing: missingIDs} // TODO res 不应该被使用或者为 nil
+		return nil, domain.NotFoundError{Missing: missingIDs}
 	}
 
 	return res, nil

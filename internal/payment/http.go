@@ -81,7 +81,6 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 				CustomerID: session.Metadata["customer_id"],
 				Status:     string(session.PaymentStatus),
 				Items:      items,
-				// PaymentLink: session.Metadata["payment_link"], 同 @stripe.go, payment_link 不会被放在 metadata 里
 			})
 			if err != nil {
 				log.Error().Err(err).Msg("error marshal domain.order")
