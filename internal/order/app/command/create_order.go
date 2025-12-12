@@ -8,7 +8,7 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/broker"
 	"github.com/furutachiKurea/gorder/common/decorator"
-	"github.com/furutachiKurea/gorder/order/app/query"
+	"github.com/furutachiKurea/gorder/order/app/client"
 	"github.com/furutachiKurea/gorder/order/convertor"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
@@ -33,13 +33,13 @@ type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult
 
 type createOrderHandler struct {
 	orderRepo domain.Repository
-	stockGRPC query.StockInterface
+	stockGRPC client.StockService
 	channel   *amqp.Channel
 }
 
 func NewCreateOrderHandler(
 	orderRepo domain.Repository,
-	stockGRPC query.StockInterface,
+	stockGRPC client.StockService,
 	channel *amqp.Channel,
 	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
@@ -78,7 +78,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 
 	validItems, err := c.validate(ctx, cmd.Items)
 	if err != nil {
-		return nil, fmt.Errorf("validate order items: %w", err)
+		return nil, err
 	}
 
 	log.Debug().
@@ -130,7 +130,7 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 	log.Debug().Any("items", items).Msg("packed items")
 	resp, err := c.stockGRPC.ReserveStock(ctx, convertor.NewItemWithQuantityConvertor().DomainsToProtos(items))
 	if err != nil {
-		return nil, status.Convert(err).Err()
+		return nil, fmt.Errorf("reserve stock:%w", status.Convert(err).Err())
 	}
 
 	if len(resp.Items) == 0 {

@@ -31,3 +31,12 @@ func (s StockGRPC) ReserveStock(ctx context.Context, items []*orderpb.ItemWithQu
 
 	return resp, err
 }
+
+func (s StockGRPC) ConfirmStockReservation(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.ConfirmStockReservationResponse, error) {
+	resp, err := s.client.ConfirmStockReservation(
+		ctx,
+		&stockpb.ConfirmStockReservationRequest{Items: items},
+	)
+
+	return resp, err
+}

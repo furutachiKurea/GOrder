@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	redisLockPrefix = "check_stock_"
+	redisLockPrefix = "reserve_stock_"
 )
 
 type ReserveStock struct {
@@ -52,19 +52,19 @@ func NewReserveStockHandler(
 	)
 }
 
-func (h reserveStockHandler) Handle(ctx context.Context, query ReserveStock) ([]*domain.Item, error) {
-	if err := lock(ctx, getLockKey(query)); err != nil {
-		return nil, fmt.Errorf("redis lock, key=%s: %w", getLockKey(query), err)
+func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) ([]*domain.Item, error) {
+	if err := lock(ctx, getLockKey(command.Items)); err != nil {
+		return nil, fmt.Errorf("redis lock, key=%s: %w", getLockKey(command.Items), err)
 	}
 	defer func() {
-		if err := unlock(ctx, getLockKey(query)); err != nil {
+		if err := unlock(ctx, getLockKey(command.Items)); err != nil {
 			log.Warn().Err(err).Msg("redis unlock fail")
 		}
 	}()
 
 	// 从 stripe 获取 priceID
 	var res []*domain.Item
-	for _, item := range query.Items {
+	for _, item := range command.Items {
 		priceID, err := h.priceProvider.GetPriceByProductID(ctx, item.Id)
 		if err != nil || priceID == "" {
 			return nil, err
@@ -78,7 +78,7 @@ func (h reserveStockHandler) Handle(ctx context.Context, query ReserveStock) ([]
 	}
 
 	// 预扣库存
-	items := packItems(query.Items)
+	items := packItems(command.Items)
 	if err := h.stockRepo.ReserveStock(ctx, items); err != nil {
 		return nil, err
 	}
@@ -94,9 +94,9 @@ func unlock(ctx context.Context, key string) error {
 	return redis.Del(ctx, redis.LocalClient(), key)
 }
 
-func getLockKey(query ReserveStock) string {
+func getLockKey(items []*domain.ItemWithQuantity) string {
 	var ids []string
-	for _, item := range query.Items {
+	for _, item := range items {
 		ids = append(ids, item.Id)
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/furutachiKurea/gorder/order/adapter"
 	"github.com/furutachiKurea/gorder/order/adapter/grpc"
 	"github.com/furutachiKurea/gorder/order/app"
+	"github.com/furutachiKurea/gorder/order/app/client"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/query"
 
@@ -44,7 +45,7 @@ func NewApplication(ctx context.Context) (app app.Application, close func()) {
 
 }
 
-func newApplication(ctx context.Context, stockClient query.StockInterface, mongoClient *mongo.Client, ch *amqp.Channel) app.Application {
+func newApplication(_ context.Context, stockClient client.StockService, mongoClient *mongo.Client, ch *amqp.Channel) app.Application {
 	orderRepo := adapter.NewOrderRepositoryMongo(mongoClient)
 	logger := log.Logger
 	metricsClient := metrics.TodoMetrics{}
@@ -59,6 +60,12 @@ func newApplication(ctx context.Context, stockClient query.StockInterface, mongo
 			),
 			UpdateOrder: command.NewUpdateOrderHandler(
 				orderRepo,
+				logger,
+				metricsClient,
+			),
+			ConfirmOrderPaid: command.NewConfirmOrderPaidHandler(
+				orderRepo,
+				stockClient,
 				logger,
 				metricsClient,
 			),

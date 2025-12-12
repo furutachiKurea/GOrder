@@ -1,4 +1,4 @@
-package query
+package client
 
 import (
 	"context"
@@ -7,7 +7,8 @@ import (
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 )
 
-type StockInterface interface {
+type StockService interface {
 	GetItems(ctx context.Context, itemIDs []string) ([]*orderpb.Item, error)
 	ReserveStock(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.ReserveStockResponse, error)
+	ConfirmStockReservation(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.ConfirmStockReservationResponse, error)
 }

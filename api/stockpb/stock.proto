@@ -9,6 +9,7 @@ import "orderpb/order.proto";
 service StockService {
   rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
   rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ConfirmStockReservation(ConfirmStockReservationRequest) returns (ConfirmStockReservationResponse);
 }
 
 message GetItemsRequest {
@@ -25,5 +26,13 @@ message ReserveStockRequest {
 
 message ReserveStockResponse {
   repeated orderpb.Item items = 2;
+}
+
+message ConfirmStockReservationRequest {
+  repeated orderpb.ItemWithQuantity items = 1;
+}
+
+message ConfirmStockReservationResponse {
+  repeated orderpb.Item items = 1;
 }
 

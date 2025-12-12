@@ -198,6 +198,94 @@ func (x *ReserveStockResponse) GetItems() []*orderpb.Item {
 	return nil
 }
 
+type ConfirmStockReservationRequest struct {
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Items         []*orderpb.ItemWithQuantity `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmStockReservationRequest) Reset() {
+	*x = ConfirmStockReservationRequest{}
+	mi := &file_stockpb_stock_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmStockReservationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmStockReservationRequest) ProtoMessage() {}
+
+func (x *ConfirmStockReservationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stockpb_stock_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmStockReservationRequest.ProtoReflect.Descriptor instead.
+func (*ConfirmStockReservationRequest) Descriptor() ([]byte, []int) {
+	return file_stockpb_stock_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ConfirmStockReservationRequest) GetItems() []*orderpb.ItemWithQuantity {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type ConfirmStockReservationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*orderpb.Item        `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmStockReservationResponse) Reset() {
+	*x = ConfirmStockReservationResponse{}
+	mi := &file_stockpb_stock_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmStockReservationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmStockReservationResponse) ProtoMessage() {}
+
+func (x *ConfirmStockReservationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stockpb_stock_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmStockReservationResponse.ProtoReflect.Descriptor instead.
+func (*ConfirmStockReservationResponse) Descriptor() ([]byte, []int) {
+	return file_stockpb_stock_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ConfirmStockReservationResponse) GetItems() []*orderpb.Item {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 var File_stockpb_stock_proto protoreflect.FileDescriptor
 
 const file_stockpb_stock_proto_rawDesc = "" +
@@ -210,10 +298,15 @@ const file_stockpb_stock_proto_rawDesc = "" +
 	"\x13ReserveStockRequest\x12/\n" +
 	"\x05items\x18\x01 \x03(\v2\x19.orderpb.ItemWithQuantityR\x05items\";\n" +
 	"\x14ReserveStockResponse\x12#\n" +
-	"\x05items\x18\x02 \x03(\v2\r.orderpb.ItemR\x05items2\x9c\x01\n" +
+	"\x05items\x18\x02 \x03(\v2\r.orderpb.ItemR\x05items\"Q\n" +
+	"\x1eConfirmStockReservationRequest\x12/\n" +
+	"\x05items\x18\x01 \x03(\v2\x19.orderpb.ItemWithQuantityR\x05items\"F\n" +
+	"\x1fConfirmStockReservationResponse\x12#\n" +
+	"\x05items\x18\x01 \x03(\v2\r.orderpb.ItemR\x05items2\x8a\x02\n" +
 	"\fStockService\x12?\n" +
 	"\bGetItems\x12\x18.stockpb.GetItemsRequest\x1a\x19.stockpb.GetItemsResponse\x12K\n" +
-	"\fReserveStock\x12\x1c.stockpb.ReserveStockRequest\x1a\x1d.stockpb.ReserveStockResponseB:Z8github.com/furutachiKurea/gorder/common/genproto/stockpbb\x06proto3"
+	"\fReserveStock\x12\x1c.stockpb.ReserveStockRequest\x1a\x1d.stockpb.ReserveStockResponse\x12l\n" +
+	"\x17ConfirmStockReservation\x12'.stockpb.ConfirmStockReservationRequest\x1a(.stockpb.ConfirmStockReservationResponseB:Z8github.com/furutachiKurea/gorder/common/genproto/stockpbb\x06proto3"
 
 var (
 	file_stockpb_stock_proto_rawDescOnce sync.Once
@@ -227,28 +320,34 @@ func file_stockpb_stock_proto_rawDescGZIP() []byte {
 	return file_stockpb_stock_proto_rawDescData
 }
 
-var file_stockpb_stock_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_stockpb_stock_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_stockpb_stock_proto_goTypes = []any{
-	(*GetItemsRequest)(nil),          // 0: stockpb.GetItemsRequest
-	(*GetItemsResponse)(nil),         // 1: stockpb.GetItemsResponse
-	(*ReserveStockRequest)(nil),      // 2: stockpb.ReserveStockRequest
-	(*ReserveStockResponse)(nil),     // 3: stockpb.ReserveStockResponse
-	(*orderpb.Item)(nil),             // 4: orderpb.Item
-	(*orderpb.ItemWithQuantity)(nil), // 5: orderpb.ItemWithQuantity
+	(*GetItemsRequest)(nil),                 // 0: stockpb.GetItemsRequest
+	(*GetItemsResponse)(nil),                // 1: stockpb.GetItemsResponse
+	(*ReserveStockRequest)(nil),             // 2: stockpb.ReserveStockRequest
+	(*ReserveStockResponse)(nil),            // 3: stockpb.ReserveStockResponse
+	(*ConfirmStockReservationRequest)(nil),  // 4: stockpb.ConfirmStockReservationRequest
+	(*ConfirmStockReservationResponse)(nil), // 5: stockpb.ConfirmStockReservationResponse
+	(*orderpb.Item)(nil),                    // 6: orderpb.Item
+	(*orderpb.ItemWithQuantity)(nil),        // 7: orderpb.ItemWithQuantity
 }
 var file_stockpb_stock_proto_depIdxs = []int32{
-	4, // 0: stockpb.GetItemsResponse.items:type_name -> orderpb.Item
-	5, // 1: stockpb.ReserveStockRequest.items:type_name -> orderpb.ItemWithQuantity
-	4, // 2: stockpb.ReserveStockResponse.items:type_name -> orderpb.Item
-	0, // 3: stockpb.StockService.GetItems:input_type -> stockpb.GetItemsRequest
-	2, // 4: stockpb.StockService.ReserveStock:input_type -> stockpb.ReserveStockRequest
-	1, // 5: stockpb.StockService.GetItems:output_type -> stockpb.GetItemsResponse
-	3, // 6: stockpb.StockService.ReserveStock:output_type -> stockpb.ReserveStockResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	6, // 0: stockpb.GetItemsResponse.items:type_name -> orderpb.Item
+	7, // 1: stockpb.ReserveStockRequest.items:type_name -> orderpb.ItemWithQuantity
+	6, // 2: stockpb.ReserveStockResponse.items:type_name -> orderpb.Item
+	7, // 3: stockpb.ConfirmStockReservationRequest.items:type_name -> orderpb.ItemWithQuantity
+	6, // 4: stockpb.ConfirmStockReservationResponse.items:type_name -> orderpb.Item
+	0, // 5: stockpb.StockService.GetItems:input_type -> stockpb.GetItemsRequest
+	2, // 6: stockpb.StockService.ReserveStock:input_type -> stockpb.ReserveStockRequest
+	4, // 7: stockpb.StockService.ConfirmStockReservation:input_type -> stockpb.ConfirmStockReservationRequest
+	1, // 8: stockpb.StockService.GetItems:output_type -> stockpb.GetItemsResponse
+	3, // 9: stockpb.StockService.ReserveStock:output_type -> stockpb.ReserveStockResponse
+	5, // 10: stockpb.StockService.ConfirmStockReservation:output_type -> stockpb.ConfirmStockReservationResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_stockpb_stock_proto_init() }
@@ -262,7 +361,7 @@ func file_stockpb_stock_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stockpb_stock_proto_rawDesc), len(file_stockpb_stock_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

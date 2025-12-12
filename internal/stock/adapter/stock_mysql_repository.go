@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
@@ -48,17 +47,17 @@ func (s StockRepositoryMySQL) ReserveStock(ctx context.Context, items []*domain.
 	return s.db.StartTransaction(func(tx *gorm.DB) (err error) {
 		defer func() {
 			if err != nil {
-				log.Warn().Err(err).Msg("update stock transaction failed")
+				log.Warn().Err(err).Msg("reserve stock transaction failed")
 			}
 		}()
 
-		stock, err := s.getAndLockStock(tx, ctx, items)
+		stocks, err := s.getAndLockStock(ctx, tx, items)
 		if err != nil {
 			return err
 		}
 
 		// 如果获取到的商品库存记录数量少于请求数量，说明请求了不存在的商品
-		if missingIDs := findMissingProductIDs(items, stock); len(missingIDs) > 0 {
+		if missingIDs := findMissingProductIDs(items, stocks); len(missingIDs) > 0 {
 			return domain.NotFoundError{Missing: missingIDs}
 		}
 
@@ -67,24 +66,43 @@ func (s StockRepositoryMySQL) ReserveStock(ctx context.Context, items []*domain.
 	})
 }
 
-// getAndLockStock 获取并锁定库存记录
+func (s StockRepositoryMySQL) ConfirmStockReservation(ctx context.Context, items []*domain.ItemWithQuantity) error {
+	return s.db.StartTransaction(func(tx *gorm.DB) (err error) {
+		defer func() {
+			if err != nil {
+				log.Warn().Err(err).Msg("confirm stock reservation transaction failed")
+			}
+		}()
+
+		_, err = s.getAndLockStock(ctx, tx, items)
+		if err != nil {
+			return err
+		}
+
+		err = s.tryConfirmStockReservation(ctx, tx, items)
+
+		return
+	})
+}
+
+// getAndLockStock 通过 item.id 获取库存并锁定库存记录
 func (s StockRepositoryMySQL) getAndLockStock(
-	tx *gorm.DB,
 	ctx context.Context,
-	data []*domain.ItemWithQuantity,
+	tx *gorm.DB,
+	items []*domain.ItemWithQuantity,
 ) ([]*persistent.StockModel, error) {
 
-	var stock []*persistent.StockModel
+	var stocks []*persistent.StockModel
 	err := tx.WithContext(ctx).
 		Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
 		Model(persistent.StockModel{}).
-		Where("product_id IN (?)", getIDsFromItems(data)).
-		Find(&stock).Error
+		Where("product_id IN (?)", getIDsFromItems(items)).
+		Find(&stocks).Error
 	if err != nil {
 		return nil, fmt.Errorf("get stock by ids from db: %w", err)
 	}
 
-	return stock, nil
+	return stocks, nil
 }
 
 // tryReserveStock 尝试预占库存
@@ -117,9 +135,6 @@ func (s StockRepositoryMySQL) tryReserveStock(
 			Update("reserved", gorm.Expr("reserved + ?", required))
 
 		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				return fmt.Errorf("product id %s not found: %w", productID, result.Error)
-			}
 			return fmt.Errorf("update stock in db: %w", result.Error)
 		}
 
@@ -157,11 +172,46 @@ func (s StockRepositoryMySQL) tryReserveStock(
 	return nil
 }
 
+func (s StockRepositoryMySQL) tryConfirmStockReservation(
+	ctx context.Context,
+	tx *gorm.DB,
+	toConfirm []*domain.ItemWithQuantity,
+) error {
+
+	confirmedReservation := make(map[string]int64)
+	for _, item := range toConfirm {
+		confirmedReservation[item.Id] += item.Quantity
+	}
+
+	var ()
+
+	for productID, quantity := range confirmedReservation {
+		if quantity == 0 {
+			continue
+		}
+
+		result := tx.WithContext(ctx).Model(persistent.StockModel{}).
+			Where("product_id = ? AND quantity >= reserved AND reserved >= ?", productID, quantity).
+			Updates(map[string]any{
+				"quantity": gorm.Expr("quantity - ?", quantity),
+				"reserved": gorm.Expr("reserved - ?", quantity),
+			})
+		if result.Error != nil {
+			return fmt.Errorf("update stock in db: %w", result.Error)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("confirm stock reservation failed for product_id=%s", productID)
+		}
+	}
+
+	return nil
+}
+
 // findMissingProductIDs 比较期望的商品列表和实际从数据库获取的库存列表，返回缺失的商品 ID 列表
-func findMissingProductIDs(requested []*domain.ItemWithQuantity, stock []*persistent.StockModel) []string {
+func findMissingProductIDs(requested []*domain.ItemWithQuantity, stocks []*persistent.StockModel) []string {
 	var missingIDs []string
 	gotSet := make(map[string]struct{})
-	for _, item := range stock {
+	for _, item := range stocks {
 		gotSet[item.ProductID] = struct{}{}
 	}
 

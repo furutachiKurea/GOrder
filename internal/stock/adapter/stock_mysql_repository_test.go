@@ -120,7 +120,6 @@ func TestStockRepositoryMySQL_ReserveStock_OverSell(t *testing.T) {
 	res, err := db.BatchGetStockByID(ctx, []string{testItem})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res)
-	t.Log("stock remain: ", res[0].Quantity)
 	assert.GreaterOrEqual(t, res[0].Quantity-res[0].Reserved, int64(0))
 }
 
@@ -255,6 +254,140 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.expectedReserved, gotReserved)
+		})
+	}
+}
+
+func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
+	tests := []struct {
+		name             string
+		initialStock     []*persistent.StockModel
+		toConfirm        []*domain.ItemWithQuantity
+		expectedQuantity map[string]int64
+		expectedReserved map[string]int64
+		wantErr          bool
+	}{
+		{
+			name: "success",
+			initialStock: []*persistent.StockModel{
+				{ProductID: "item-1", Quantity: 100, Reserved: 10},
+				{ProductID: "item-2", Quantity: 50, Reserved: 5},
+			},
+			toConfirm: []*domain.ItemWithQuantity{
+				{Id: "item-1", Quantity: 5},
+				{Id: "item-2", Quantity: 3},
+			},
+			expectedQuantity: map[string]int64{
+				"item-1": 95,
+				"item-2": 47,
+			},
+			expectedReserved: map[string]int64{
+				"item-1": 5,
+				"item-2": 2,
+			},
+			wantErr: false,
+		},
+		{
+			name: "over sell",
+			initialStock: []*persistent.StockModel{
+				{ProductID: "item-1", Quantity: 100, Reserved: 3},
+			},
+			toConfirm: []*domain.ItemWithQuantity{
+				{Id: "item-1", Quantity: 5}, // 超卖了
+			},
+			expectedQuantity: map[string]int64{
+				"item-1": 100,
+			},
+			expectedReserved: map[string]int64{
+				"item-1": 3,
+			},
+			wantErr: true,
+		},
+		{
+			name: "item not exists",
+			initialStock: []*persistent.StockModel{
+				{ProductID: "item-1", Quantity: 100, Reserved: 10},
+			},
+			toConfirm: []*domain.ItemWithQuantity{
+				{Id: "item-2", Quantity: 5},
+			},
+			expectedQuantity: map[string]int64{
+				"item-1": 100,
+			},
+			expectedReserved: map[string]int64{
+				"item-1": 10,
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed partial items",
+			initialStock: []*persistent.StockModel{
+				{ProductID: "item-1", Quantity: 100, Reserved: 20},
+				{ProductID: "item-2", Quantity: 50, Reserved: 0},
+				{ProductID: "item-3", Quantity: 30, Reserved: 5},
+			},
+			toConfirm: []*domain.ItemWithQuantity{
+				{Id: "item-1", Quantity: 10},
+				{Id: "item-2", Quantity: 5},
+				{Id: "item-3", Quantity: 2},
+			},
+			expectedQuantity: map[string]int64{
+				"item-1": 100,
+				"item-2": 50,
+				"item-3": 30,
+			},
+			expectedReserved: map[string]int64{
+				"item-1": 20,
+				"item-2": 0,
+				"item-3": 5,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := setupTestDB(t)
+			ctx := context.Background()
+
+			// 设置初始数据
+			err := db.CreateBatch(ctx, tt.initialStock)
+			require.NoError(t, err)
+
+			repo := NewStockRepositoryMySQL(db)
+			err = repo.ConfirmStockReservation(ctx, tt.toConfirm)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			ids := make([]string, len(tt.initialStock))
+			for i, stock := range tt.initialStock {
+				ids[i] = stock.ProductID
+			}
+
+			stocks, err := db.BatchGetStockByID(ctx, ids)
+			require.NoError(t, err)
+
+			// 验证库存数量
+			if tt.expectedQuantity != nil {
+				for _, stock := range stocks {
+					if expected, exists := tt.expectedQuantity[stock.ProductID]; exists {
+						assert.Equal(t, expected, stock.Quantity)
+					}
+				}
+			}
+
+			// 验证预占数量
+			if tt.expectedReserved != nil {
+				for _, stock := range stocks {
+					if expected, exists := tt.expectedReserved[stock.ProductID]; exists {
+						assert.Equal(t, expected, stock.Reserved)
+					}
+				}
+			}
 		})
 	}
 }

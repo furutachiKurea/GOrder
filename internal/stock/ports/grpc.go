@@ -47,3 +47,14 @@ func (G GRPCServer) ReserveStock(ctx context.Context, request *stockpb.ReserveSt
 		Items: convertor.NewItemConvertor().DomainsToProtos(items),
 	}, nil
 }
+
+func (G GRPCServer) ConfirmStockReservation(ctx context.Context, request *stockpb.ConfirmStockReservationRequest) (*stockpb.ConfirmStockReservationResponse, error) {
+	_, err := G.app.Commands.ConfirmStockReservation.Handle(ctx, command.ConfirmStockReservation{
+		Items: convertor.NewItemWithQuantityConvertor().ProtosToDomains(request.Items),
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &stockpb.ConfirmStockReservationResponse{}, nil
+}

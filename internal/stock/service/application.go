@@ -28,6 +28,11 @@ func NewApplication(_ context.Context) app.Application {
 				logger,
 				metricsClient,
 			),
+			ConfirmStockReservation: command.NewConfirmStockReservation(
+				stockRepo,
+				logger,
+				metricsClient,
+			),
 		},
 		Queries: app.Queries{
 			GetItems: query.NewGetItemsHandler(

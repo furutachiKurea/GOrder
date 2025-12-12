@@ -51,6 +51,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 }
 
 // handleMessage 处理接收到的订单创建消息，并将更新后的订单状态储存到数据库
+// TODO 更新商品库存，完成实际库存减扣
 func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Queue) {
 	log.Info().
 		Str("msg", string(msg.Body)).
@@ -71,7 +72,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	}()
 
 	o := &domain.Order{}
-	if err := json.Unmarshal(msg.Body, o); err != nil {
+	if err = json.Unmarshal(msg.Body, o); err != nil {
 		log.Info().
 			Err(err).
 			Msg("failed to unmarshal msg.body to domain.order")
@@ -79,18 +80,8 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		return
 	}
 
-	// 这块从 mq 中获取到的订单信息缺失 paymentLink，但是此时订单已经支付成功，应该可以放着不管或者说支付完的订单不需要支付链接
 	log.Debug().Any("unmarshalled_order", o).Msg("unmarshalled order from message")
-	_, err = c.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
-		Order: o,
-		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
-			if err = order.IsPaid(); err != nil {
-				return nil, err
-			}
-
-			return order, nil
-		},
-	})
+	_, err = c.app.Commands.ConfirmOrderPaid.Handle(ctx, command.ConfirmOrderPaid{Order: o})
 	if err != nil {
 		log.Info().
 			Err(err).
@@ -107,6 +98,5 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	}
 
 	span.AddEvent("order.updated")
-
 	log.Info().Msg("order consume success paid event success")
 }

@@ -11,7 +11,8 @@ type Application struct {
 }
 
 type Commands struct {
-	ReserveStock command.ReserveStockHandler
+	ReserveStock            command.ReserveStockHandler
+	ConfirmStockReservation command.ConfirmStockReservationHandler
 }
 
 type Queries struct {

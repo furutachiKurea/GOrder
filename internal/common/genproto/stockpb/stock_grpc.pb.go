@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StockService_GetItems_FullMethodName     = "/stockpb.StockService/GetItems"
-	StockService_ReserveStock_FullMethodName = "/stockpb.StockService/ReserveStock"
+	StockService_GetItems_FullMethodName                = "/stockpb.StockService/GetItems"
+	StockService_ReserveStock_FullMethodName            = "/stockpb.StockService/ReserveStock"
+	StockService_ConfirmStockReservation_FullMethodName = "/stockpb.StockService/ConfirmStockReservation"
 )
 
 // StockServiceClient is the client API for StockService service.
@@ -29,6 +30,7 @@ const (
 type StockServiceClient interface {
 	GetItems(ctx context.Context, in *GetItemsRequest, opts ...grpc.CallOption) (*GetItemsResponse, error)
 	ReserveStock(ctx context.Context, in *ReserveStockRequest, opts ...grpc.CallOption) (*ReserveStockResponse, error)
+	ConfirmStockReservation(ctx context.Context, in *ConfirmStockReservationRequest, opts ...grpc.CallOption) (*ConfirmStockReservationResponse, error)
 }
 
 type stockServiceClient struct {
@@ -59,12 +61,23 @@ func (c *stockServiceClient) ReserveStock(ctx context.Context, in *ReserveStockR
 	return out, nil
 }
 
+func (c *stockServiceClient) ConfirmStockReservation(ctx context.Context, in *ConfirmStockReservationRequest, opts ...grpc.CallOption) (*ConfirmStockReservationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmStockReservationResponse)
+	err := c.cc.Invoke(ctx, StockService_ConfirmStockReservation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StockServiceServer is the server API for StockService service.
 // All implementations should embed UnimplementedStockServiceServer
 // for forward compatibility.
 type StockServiceServer interface {
 	GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error)
 	ReserveStock(context.Context, *ReserveStockRequest) (*ReserveStockResponse, error)
+	ConfirmStockReservation(context.Context, *ConfirmStockReservationRequest) (*ConfirmStockReservationResponse, error)
 }
 
 // UnimplementedStockServiceServer should be embedded to have
@@ -79,6 +92,9 @@ func (UnimplementedStockServiceServer) GetItems(context.Context, *GetItemsReques
 }
 func (UnimplementedStockServiceServer) ReserveStock(context.Context, *ReserveStockRequest) (*ReserveStockResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReserveStock not implemented")
+}
+func (UnimplementedStockServiceServer) ConfirmStockReservation(context.Context, *ConfirmStockReservationRequest) (*ConfirmStockReservationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmStockReservation not implemented")
 }
 func (UnimplementedStockServiceServer) testEmbeddedByValue() {}
 
@@ -136,6 +152,24 @@ func _StockService_ReserveStock_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StockService_ConfirmStockReservation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmStockReservationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServiceServer).ConfirmStockReservation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StockService_ConfirmStockReservation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServiceServer).ConfirmStockReservation(ctx, req.(*ConfirmStockReservationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StockService_ServiceDesc is the grpc.ServiceDesc for StockService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -150,6 +184,10 @@ var StockService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReserveStock",
 			Handler:    _StockService_ReserveStock_Handler,
+		},
+		{
+			MethodName: "ConfirmStockReservation",
+			Handler:    _StockService_ConfirmStockReservation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
