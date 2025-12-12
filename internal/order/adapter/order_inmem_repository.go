@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -62,6 +61,11 @@ func (m *MemoryOrderRepository) Create(_ context.Context, order *domain.Order) (
 	}
 
 	return newOrder, nil
+	/*			updatedOrder, err := updateFn(ctx, order)
+				if err != nil {
+					return fmt.Errorf("memory order repository update: %w", err)
+				}
+	*/
 }
 
 func (m *MemoryOrderRepository) Get(_ context.Context, orderID, customerID string) (*domain.Order, error) {
@@ -78,25 +82,20 @@ func (m *MemoryOrderRepository) Get(_ context.Context, orderID, customerID strin
 	return nil, domain.NotFoundError{OrderID: orderID}
 }
 
-func (m *MemoryOrderRepository) Update(ctx context.Context, order *domain.Order, updateFn func(context.Context, *domain.Order) (*domain.Order, error)) error {
+func (m *MemoryOrderRepository) Update(ctx context.Context, updates *domain.Order) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
 	isFound := false
 	for i, o := range m.store {
-		if o.ID == order.ID && o.CustomerID == order.CustomerID {
+		if o.ID == updates.ID && o.CustomerID == updates.CustomerID {
 			isFound = true
-			updatedOrder, err := updateFn(ctx, order)
-			if err != nil {
-				return fmt.Errorf("memory order repository update: %w", err)
-			}
-
-			m.store[i] = updatedOrder
+			m.store[i] = updates
 		}
 	}
 
 	if !isFound {
-		return domain.NotFoundError{OrderID: order.ID}
+		return domain.NotFoundError{OrderID: updates.ID}
 	}
 
 	return nil

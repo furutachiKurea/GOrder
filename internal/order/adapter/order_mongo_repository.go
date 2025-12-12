@@ -31,7 +31,7 @@ func NewOrderRepositoryMongo(db *mongo.Client) *OrderRepositoryMongo {
 func (r *OrderRepositoryMongo) Create(ctx context.Context, order *domain.Order) (created *domain.Order, err error) {
 	defer r.logWithTag("create", err, created)
 
-	write := r.marshalToModel(order)
+	write := r.domainToMongo(order)
 	res, err := r.collection().InsertOne(ctx, write)
 	if err != nil {
 		return nil, err
@@ -68,14 +68,10 @@ func (r *OrderRepositoryMongo) Get(ctx context.Context, orderID, customerID stri
 }
 
 // Update 先查找对应的 Order，然后 apply updateFn，再写入 Mongo
-func (r *OrderRepositoryMongo) Update(
-	ctx context.Context,
-	order *domain.Order,
-	updateFn func(context.Context, *domain.Order) (*domain.Order, error),
-) (err error) {
+func (r *OrderRepositoryMongo) Update(ctx context.Context, updates *domain.Order) (err error) {
 	defer r.logWithTag("update", err, nil)
 
-	if order == nil {
+	if updates == nil {
 		panic("got nil order")
 	}
 
@@ -97,21 +93,20 @@ func (r *OrderRepositoryMongo) Update(
 	}()
 
 	// transaction in (end at defer)
-	oldOrder, err := r.Get(ctx, order.ID, order.CustomerID)
+	oldOrder, err := r.Get(ctx, updates.ID, updates.CustomerID)
 	if err != nil {
 		return
 	}
-	updated, err := updateFn(ctx, order)
-	if err != nil {
-		return
-	}
+
+	updated := r.updateOrder(oldOrder, updates)
+	log.Debug().Any("order_update_to", updated).Msg("")
 
 	mongoID, _ := primitive.ObjectIDFromHex(oldOrder.ID)
 	res, err := r.collection().UpdateOne(
 		ctx,
 		bson.M{"_id": mongoID},
 		bson.M{"$set": bson.M{
-			"id":           updated.ID,
+			"id":           mongoID,
 			"status":       updated.Status,
 			"payment_link": updated.PaymentLink,
 		}},
@@ -129,7 +124,7 @@ func (r *OrderRepositoryMongo) collection() *mongo.Collection {
 	return r.db.Database(dbName).Collection(collName)
 }
 
-func (r *OrderRepositoryMongo) marshalToModel(order *domain.Order) *orderModel {
+func (r *OrderRepositoryMongo) domainToMongo(order *domain.Order) *orderModel {
 	return &orderModel{
 		MongoID:     primitive.NewObjectID(),
 		ID:          order.ID,
@@ -165,10 +160,29 @@ func (r *OrderRepositoryMongo) logWithTag(tag string, err error, result any) {
 	}
 }
 
+// updateOrder 根据 old order 和 updates 生成新的 order
+//
+// PaymentLink 始终使用 updates 的值，使得在支付完成之后 PaymentLink 会被置空
+func (r *OrderRepositoryMongo) updateOrder(old *domain.Order, updates *domain.Order) *domain.Order {
+	res := &domain.Order{
+		ID:          old.ID,
+		CustomerID:  old.CustomerID,
+		Status:      old.Status,
+		PaymentLink: updates.PaymentLink,
+		Items:       old.Items,
+	}
+
+	if updates.Status != "" && updates.Status != old.Status {
+		res.UpdatesStatus(updates.Status)
+	}
+
+	return res
+}
+
 // orderModel MongoDB 的订单模型
 type orderModel struct {
 	MongoID     primitive.ObjectID `bson:"_id"`
-	ID          string             `bson:"id"`
+	ID          string             `bson:"id"` // ID 与 MongoID 对应
 	CustomerID  string             `bson:"customer_id"`
 	Status      string             `bson:"status"`
 	PaymentLink string             `bson:"payment_link"`

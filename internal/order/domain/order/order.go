@@ -59,6 +59,35 @@ func NewPendingOrder(customerID string, items []*Item) (*Order, error) {
 	}, nil
 }
 
+// UpdatesStatus 更新订单状态
+//
+// 目前支持的状态转换有：
+//
+// - "pending" -> "waiting_for_payment", "canceled"
+//
+// - "waiting_for_payment" -> "paid", "canceled"
+//
+// - "paid" -> "ready"
+func (o *Order) UpdatesStatus(status string) {
+	statusTable := map[string][]string{
+		"pending":             {"waiting_for_payment", "canceled"},
+		"waiting_for_payment": {"paid", "canceled"},
+		"paid":                {"ready"},
+	}
+
+	allowedStatuses, ok := statusTable[o.Status]
+	if !ok {
+		return
+	}
+
+	for _, allowedStatus := range allowedStatuses {
+		if status == allowedStatus {
+			o.Status = status
+			return
+		}
+	}
+}
+
 func (o *Order) IsPaid() error {
 	if o.Status == string(stripe.CheckoutSessionPaymentStatusPaid) {
 		return nil

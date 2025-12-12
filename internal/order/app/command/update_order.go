@@ -9,12 +9,10 @@ import (
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 type UpdateOrder struct {
-	Order    *domain.Order
-	UpdateFn func(ctx context.Context, order *domain.Order) (*domain.Order, error)
+	Order *domain.Order
 }
 
 // UpdateOrderHandler 使用给定的 UpdateFn 更新订单
@@ -44,14 +42,7 @@ func (c updateOrderHandler) Handle(ctx context.Context, cmd UpdateOrder) (any, e
 	ctx, span := tracing.Start(ctx, "updateOrderHandler")
 	defer span.End()
 
-	if cmd.UpdateFn == nil {
-		log.Warn().Msgf("updateOrderHandler got nil UpdateFunc, order=%#v", cmd.Order)
-		cmd.UpdateFn = func(_ context.Context, order *domain.Order) (*domain.Order, error) {
-			return order, nil
-		}
-	}
-
-	if err := c.orderRepo.Update(ctx, cmd.Order, cmd.UpdateFn); err != nil {
+	if err := c.orderRepo.Update(ctx, cmd.Order); err != nil {
 		return nil, fmt.Errorf("create order: %w", err)
 	}
 
