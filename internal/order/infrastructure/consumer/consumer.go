@@ -51,7 +51,6 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 }
 
 // handleMessage 处理接收到的订单创建消息，并将更新后的订单状态储存到数据库
-// TODO 更新商品库存，完成实际库存减扣
 func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Queue) {
 	log.Info().
 		Str("msg", string(msg.Body)).
