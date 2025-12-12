@@ -77,7 +77,9 @@ func (h reserveStockHandler) Handle(ctx context.Context, query ReserveStock) ([]
 		})
 	}
 
-	if err := h.checkStock(ctx, query.Items); err != nil {
+	// 预扣库存
+	items := packItems(query.Items)
+	if err := h.stockRepo.ReserveStock(ctx, items); err != nil {
 		return nil, err
 	}
 
@@ -99,72 +101,6 @@ func getLockKey(query ReserveStock) string {
 	}
 
 	return redisLockPrefix + strings.Join(ids, "_")
-}
-
-// checkStock 检查库存是否充足并尝试预占库存避免超卖，该方法会处理重复的 item，调用时可以不用合并 item
-func (h reserveStockHandler) checkStock(ctx context.Context, query []*domain.ItemWithQuantity) error {
-	var ids []string
-	for _, item := range query {
-		ids = append(ids, item.Id)
-	}
-
-	records, err := h.stockRepo.GetStock(ctx, ids)
-	if err != nil {
-		return err
-	}
-
-	stocks := make(map[string]int64)
-	for _, r := range records {
-		stocks[r.Id] = r.Quantity
-	}
-	var (
-		ok       = true
-		failedOn []struct {
-			ID   string
-			Want int64
-			Have int64
-		}
-	)
-
-	// 合并相同商品数量
-	query = packItems(query)
-
-	for _, q := range query {
-		if q.Quantity > stocks[q.Id] {
-			ok = false
-			failedOn = append(failedOn, struct {
-				ID   string
-				Want int64
-				Have int64
-			}{
-				ID:   q.Id,
-				Want: q.Quantity,
-				Have: stocks[q.Id],
-			})
-		}
-	}
-	if ok {
-		return h.stockRepo.ReserveStock(ctx, query, func(
-			ctx context.Context,
-			existing,
-			require []*domain.ItemWithQuantity,
-		) ([]*domain.ItemWithQuantity, error) {
-			var updated []*domain.ItemWithQuantity
-			for _, e := range existing {
-				for _, r := range require {
-					if e.Id == r.Id {
-						updated = append(updated, &domain.ItemWithQuantity{
-							Id:       e.Id,
-							Quantity: e.Quantity - r.Quantity,
-						})
-					}
-				}
-			}
-			return updated, nil
-		})
-	}
-
-	return domain.ExceedStockError{FailedOn: failedOn}
 }
 
 // packItems 合并相同商品的数量

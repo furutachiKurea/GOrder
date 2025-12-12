@@ -18,25 +18,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// deductStockUpdateFunc 用于测试，库存更新函数，执行扣减操作
-var deductStockUpdateFunc = func(ctx context.Context,
-	existing []*domain.ItemWithQuantity,
-	query []*domain.ItemWithQuantity,
-) ([]*domain.ItemWithQuantity, error) {
-	var updated []*domain.ItemWithQuantity
-	for _, e := range existing {
-		for _, r := range query {
-			if e.Id == r.Id {
-				updated = append(updated, &domain.ItemWithQuantity{
-					Id:       e.Id,
-					Quantity: e.Quantity - r.Quantity,
-				})
-			}
-		}
-	}
-	return updated, nil
-}
-
 func setupTestDB(t *testing.T) *persistent.MySQL {
 	cfg := viper.Sub("mysql")
 
@@ -91,11 +72,7 @@ func TestStockRepositoryMySQL_ReserveStock_Race(t *testing.T) {
 
 	for range concurrentGoroutines {
 		g.Go(func() error {
-			err := repo.ReserveStock(
-				ctx,
-				[]*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}},
-				deductStockUpdateFunc,
-			)
+			err := repo.ReserveStock(ctx, []*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}})
 			return err
 		})
 	}
@@ -135,10 +112,7 @@ func TestStockRepositoryMySQL_ReserveStock_OverSell(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = repo.ReserveStock(
-				ctx,
-				[]*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}},
-				deductStockUpdateFunc)
+			_ = repo.ReserveStock(ctx, []*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}})
 		}()
 	}
 	wg.Wait()
@@ -254,7 +228,7 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 			require.NoError(t, err)
 
 			repo := NewStockRepositoryMySQL(db)
-			err = repo.ReserveStock(ctx, tt.toUpdate, deductStockUpdateFunc)
+			err = repo.ReserveStock(ctx, tt.toUpdate)
 
 			if tt.wantErr {
 				require.Error(t, err)

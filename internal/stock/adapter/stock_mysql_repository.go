@@ -44,15 +44,7 @@ func (s StockRepositoryMySQL) GetStock(ctx context.Context, ids []string) ([]*do
 }
 
 // ReserveStock 预占库存，使用悲观锁保证一致性
-func (s StockRepositoryMySQL) ReserveStock(
-	ctx context.Context,
-	data []*domain.ItemWithQuantity,
-	_ func(
-		ctx context.Context,
-		existing []*domain.ItemWithQuantity,
-		query []*domain.ItemWithQuantity,
-	) ([]*domain.ItemWithQuantity, error),
-) error {
+func (s StockRepositoryMySQL) ReserveStock(ctx context.Context, items []*domain.ItemWithQuantity) error {
 	return s.db.StartTransaction(func(tx *gorm.DB) (err error) {
 		defer func() {
 			if err != nil {
@@ -60,17 +52,17 @@ func (s StockRepositoryMySQL) ReserveStock(
 			}
 		}()
 
-		stock, err := s.getAndLockStock(tx, ctx, data)
+		stock, err := s.getAndLockStock(tx, ctx, items)
 		if err != nil {
 			return err
 		}
 
 		// 如果获取到的商品库存记录数量少于请求数量，说明请求了不存在的商品
-		if missingIDs := findMissingProductIDs(data, stock); len(missingIDs) > 0 {
+		if missingIDs := findMissingProductIDs(items, stock); len(missingIDs) > 0 {
 			return domain.NotFoundError{Missing: missingIDs}
 		}
 
-		err = s.tryReserveStock(ctx, tx, data)
+		err = s.tryReserveStock(ctx, tx, items)
 		return
 	})
 }
@@ -99,11 +91,11 @@ func (s StockRepositoryMySQL) getAndLockStock(
 func (s StockRepositoryMySQL) tryReserveStock(
 	ctx context.Context,
 	tx *gorm.DB,
-	data []*domain.ItemWithQuantity,
+	toReserve []*domain.ItemWithQuantity,
 ) error {
 
 	requiredQuantities := make(map[string]int64)
-	for _, item := range data {
+	for _, item := range toReserve {
 		requiredQuantities[item.Id] += item.Quantity
 	}
 

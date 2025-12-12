@@ -41,12 +41,7 @@ type MemoryStockRepository struct {
 }
 
 // Deprecated: use StockRepositoryMySQL.ReserveStock.
-func (m MemoryStockRepository) ReserveStock(ctx context.Context, data []*domain.ItemWithQuantity,
-	updateFn func(ctx context.Context,
-		existing []*domain.ItemWithQuantity,
-		query []*domain.ItemWithQuantity,
-	) ([]*domain.ItemWithQuantity, error),
-) error {
+func (m MemoryStockRepository) ReserveStock(ctx context.Context, items []*domain.ItemWithQuantity) error {
 	// TODO implement me
 	panic("implement me")
 }
