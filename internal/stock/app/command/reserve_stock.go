@@ -1,4 +1,4 @@
-package query
+package command
 
 import (
 	"context"
@@ -18,23 +18,23 @@ const (
 	redisLockPrefix = "check_stock_"
 )
 
-type CheckIfItemsInStock struct {
+type ReserveStock struct {
 	Items []*domain.ItemWithQuantity
 }
 
-type CheckIfItemsInStockHandler decorator.QueryHandler[CheckIfItemsInStock, []*domain.Item]
+type ReserveStockHandler decorator.CommandHandler[ReserveStock, []*domain.Item]
 
-type checkIfItemsInStockHandler struct {
+type reserveStockHandler struct {
 	stockRepo     domain.Repository
 	priceProvider PriceProvider
 }
 
-func NewCheckIfItemsInStockHandler(
+func NewReserveStockHandler(
 	stockRepo domain.Repository,
 	priceProvider PriceProvider,
 	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
-) CheckIfItemsInStockHandler {
+) ReserveStockHandler {
 	if stockRepo == nil {
 		panic("stockRepo is nil")
 	}
@@ -42,8 +42,8 @@ func NewCheckIfItemsInStockHandler(
 		panic("priceProvider is nil")
 	}
 
-	return decorator.ApplyQueryDecorators[CheckIfItemsInStock, []*domain.Item](
-		checkIfItemsInStockHandler{
+	return decorator.ApplyCommandDecorators[ReserveStock, []*domain.Item](
+		reserveStockHandler{
 			stockRepo:     stockRepo,
 			priceProvider: priceProvider,
 		},
@@ -52,13 +52,7 @@ func NewCheckIfItemsInStockHandler(
 	)
 }
 
-// Deprecated
-var stub = map[string]string{
-	"1": "price_1SZBTrKQ4HJNAIH7x1izqMNh",
-	"2": "price_1SZBe7KQ4HJNAIH7CDXMbh0X",
-}
-
-func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*domain.Item, error) {
+func (h reserveStockHandler) Handle(ctx context.Context, query ReserveStock) ([]*domain.Item, error) {
 	if err := lock(ctx, getLockKey(query)); err != nil {
 		return nil, fmt.Errorf("redis lock, key=%s: %w", getLockKey(query), err)
 	}
@@ -83,7 +77,6 @@ func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfIte
 		})
 	}
 
-	// TODO 在查询库存是否足够之后就扣除库存，没有处理当用户没有实际支付成功的情况
 	if err := h.checkStock(ctx, query.Items); err != nil {
 		return nil, err
 	}
@@ -99,7 +92,7 @@ func unlock(ctx context.Context, key string) error {
 	return redis.Del(ctx, redis.LocalClient(), key)
 }
 
-func getLockKey(query CheckIfItemsInStock) string {
+func getLockKey(query ReserveStock) string {
 	var ids []string
 	for _, item := range query.Items {
 		ids = append(ids, item.Id)
@@ -108,8 +101,8 @@ func getLockKey(query CheckIfItemsInStock) string {
 	return redisLockPrefix + strings.Join(ids, "_")
 }
 
-// checkStock 检查库存是否充足并尝试扣除库存，该方法会处理重复的 item，调用时可以不用合并 item
-func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*domain.ItemWithQuantity) error {
+// checkStock 检查库存是否充足并尝试预占库存避免超卖，该方法会处理重复的 item，调用时可以不用合并 item
+func (h reserveStockHandler) checkStock(ctx context.Context, query []*domain.ItemWithQuantity) error {
 	var ids []string
 	for _, item := range query {
 		ids = append(ids, item.Id)
@@ -120,9 +113,9 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 		return err
 	}
 
-	idQuantityMap := make(map[string]int64)
+	stocks := make(map[string]int64)
 	for _, r := range records {
-		idQuantityMap[r.Id] = r.Quantity
+		stocks[r.Id] = r.Quantity
 	}
 	var (
 		ok       = true
@@ -136,22 +129,22 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, query []*dom
 	// 合并相同商品数量
 	query = packItems(query)
 
-	for _, item := range query {
-		if item.Quantity > idQuantityMap[item.Id] {
+	for _, q := range query {
+		if q.Quantity > stocks[q.Id] {
 			ok = false
 			failedOn = append(failedOn, struct {
 				ID   string
 				Want int64
 				Have int64
 			}{
-				ID:   item.Id,
-				Want: item.Quantity,
-				Have: idQuantityMap[item.Id],
+				ID:   q.Id,
+				Want: q.Quantity,
+				Have: stocks[q.Id],
 			})
 		}
 	}
 	if ok {
-		return h.stockRepo.UpdateStock(ctx, query, func(
+		return h.stockRepo.ReserveStock(ctx, query, func(
 			ctx context.Context,
 			existing,
 			require []*domain.ItemWithQuantity,

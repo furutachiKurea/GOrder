@@ -24,9 +24,9 @@ func (s StockGRPC) GetItems(ctx context.Context, itemIDs []string) ([]*orderpb.I
 	return resp.Items, nil
 }
 
-func (s StockGRPC) CheckIfItemsInStock(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.CheckIfItemsInStockResponse, error) {
-	resp, err := s.client.CheckIfItemsInStock(ctx,
-		&stockpb.CheckIfItemsInStockRequest{Items: items},
+func (s StockGRPC) ReserveStock(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.ReserveStockResponse, error) {
+	resp, err := s.client.ReserveStock(ctx,
+		&stockpb.ReserveStockRequest{Items: items},
 	)
 
 	return resp, err

@@ -5,6 +5,7 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/stock/app"
+	"github.com/furutachiKurea/gorder/stock/app/command"
 	"github.com/furutachiKurea/gorder/stock/app/query"
 	"github.com/furutachiKurea/gorder/stock/convertor"
 
@@ -31,10 +32,10 @@ func (G GRPCServer) GetItems(ctx context.Context, request *stockpb.GetItemsReque
 	}, nil
 }
 
-func (G GRPCServer) CheckIfItemsInStock(ctx context.Context, request *stockpb.CheckIfItemsInStockRequest) (*stockpb.CheckIfItemsInStockResponse, error) {
-	items, err := G.app.Queries.CheckIfItemsInStock.Handle(
+func (G GRPCServer) ReserveStock(ctx context.Context, request *stockpb.ReserveStockRequest) (*stockpb.ReserveStockResponse, error) {
+	items, err := G.app.Commands.ReserveStock.Handle(
 		ctx,
-		query.CheckIfItemsInStock{
+		command.ReserveStock{
 			Items: convertor.NewItemWithQuantityConvertor().ProtosToDomains(request.Items),
 		},
 	)
@@ -42,8 +43,7 @@ func (G GRPCServer) CheckIfItemsInStock(ctx context.Context, request *stockpb.Ch
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &stockpb.CheckIfItemsInStockResponse{
-		InStock: 1,
-		Items:   convertor.NewItemConvertor().DomainsToProtos(items),
+	return &stockpb.ReserveStockResponse{
+		Items: convertor.NewItemConvertor().DomainsToProtos(items),
 	}, nil
 }

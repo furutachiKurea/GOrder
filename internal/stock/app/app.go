@@ -1,6 +1,9 @@
 package app
 
-import "github.com/furutachiKurea/gorder/stock/app/query"
+import (
+	"github.com/furutachiKurea/gorder/stock/app/command"
+	"github.com/furutachiKurea/gorder/stock/app/query"
+)
 
 type Application struct {
 	Commands Commands
@@ -8,9 +11,9 @@ type Application struct {
 }
 
 type Commands struct {
+	ReserveStock command.ReserveStockHandler
 }
 
 type Queries struct {
-	GetItems            query.GetItemsHandler
-	CheckIfItemsInStock query.CheckIfItemsInStockHandler
+	GetItems query.GetItemsHandler
 }

@@ -9,8 +9,10 @@ import (
 	_ "github.com/furutachiKurea/gorder/common/config"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 	"github.com/furutachiKurea/gorder/stock/infrastructure/persistent"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -66,7 +68,7 @@ func setupTestDB(t *testing.T) *persistent.MySQL {
 	return persistent.NewMySQLWithDB(db)
 }
 
-func TestStockRepositoryMySQL_UpdateStock_Race(t *testing.T) {
+func TestStockRepositoryMySQL_ReserveStock_Race(t *testing.T) {
 	db := setupTestDB(t)
 
 	var (
@@ -89,7 +91,7 @@ func TestStockRepositoryMySQL_UpdateStock_Race(t *testing.T) {
 
 	for range concurrentGoroutines {
 		g.Go(func() error {
-			err := repo.UpdateStock(
+			err := repo.ReserveStock(
 				ctx,
 				[]*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}},
 				deductStockUpdateFunc,
@@ -105,10 +107,10 @@ func TestStockRepositoryMySQL_UpdateStock_Race(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	expected := initialStock - concurrentGoroutines
-	assert.Equal(t, int64(expected), res[0].Quantity)
+	assert.Equal(t, int64(expected), res[0].Quantity-res[0].Reserved)
 }
 
-func TestStockRepositoryMySQL_UpdateStock_OverSell(t *testing.T) {
+func TestStockRepositoryMySQL_ReserveStock_OverSell(t *testing.T) {
 	db := setupTestDB(t)
 
 	var (
@@ -133,7 +135,7 @@ func TestStockRepositoryMySQL_UpdateStock_OverSell(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = repo.UpdateStock(
+			_ = repo.ReserveStock(
 				ctx,
 				[]*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}},
 				deductStockUpdateFunc)
@@ -145,16 +147,16 @@ func TestStockRepositoryMySQL_UpdateStock_OverSell(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res)
 	t.Log("stock remain: ", res[0].Quantity)
-	assert.GreaterOrEqual(t, res[0].Quantity, int64(0))
+	assert.GreaterOrEqual(t, res[0].Quantity-res[0].Reserved, int64(0))
 }
 
-func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {
+func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 	tests := []struct {
-		name        string
-		stock       []*persistent.StockModel
-		toUpdate    []*domain.ItemWithQuantity
-		afterUpdate []*domain.ItemWithQuantity
-		wantErr     bool
+		name             string
+		stock            []*persistent.StockModel
+		toUpdate         []*domain.ItemWithQuantity
+		expectedReserved map[string]int64
+		wantErr          bool
 	}{
 		{
 			name: "success",
@@ -162,33 +164,22 @@ func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {
 				{
 					ProductID: "item-1",
 					Quantity:  100,
+					Reserved:  0,
 				},
 				{
 					ProductID: "item-2",
 					Quantity:  2,
+					Reserved:  0,
 				},
 			},
 			toUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-2",
-					Quantity: 2,
-				},
-				{
-					Id:       "item-1",
-					Quantity: 2,
-				},
+				{Id: "item-2", Quantity: 2},
+				{Id: "item-1", Quantity: 2},
 			},
-			afterUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-1",
-					Quantity: 98,
-				},
-				{
-					Id:       "item-2",
-					Quantity: 0,
-				},
+			expectedReserved: map[string]int64{
+				"item-1": 2,
+				"item-2": 2,
 			},
-
 			wantErr: false,
 		},
 		{
@@ -197,31 +188,21 @@ func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {
 				{
 					ProductID: "item-1",
 					Quantity:  100,
+					Reserved:  0,
 				},
 				{
 					ProductID: "item-2",
 					Quantity:  2,
+					Reserved:  0,
 				},
 			},
 			toUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-2",
-					Quantity: 1000,
-				},
-				{
-					Id:       "item-1",
-					Quantity: 200000,
-				},
+				{Id: "item-2", Quantity: 1000},
+				{Id: "item-1", Quantity: 200000},
 			},
-			afterUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-1",
-					Quantity: 100,
-				},
-				{
-					Id:       "item-2",
-					Quantity: 2,
-				},
+			expectedReserved: map[string]int64{
+				"item-1": 0,
+				"item-2": 0,
 			},
 			wantErr: true,
 		},
@@ -231,31 +212,21 @@ func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {
 				{
 					ProductID: "item-1",
 					Quantity:  100,
+					Reserved:  0,
 				},
 				{
 					ProductID: "item-2",
 					Quantity:  2,
+					Reserved:  0,
 				},
 			},
 			toUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-2",
-					Quantity: 1000,
-				},
-				{
-					Id:       "item-1",
-					Quantity: 1,
-				},
+				{Id: "item-2", Quantity: 1000},
+				{Id: "item-1", Quantity: 1},
 			},
-			afterUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-1",
-					Quantity: 100,
-				},
-				{
-					Id:       "item-2",
-					Quantity: 2,
-				},
+			expectedReserved: map[string]int64{
+				"item-1": 0,
+				"item-2": 0,
 			},
 			wantErr: true,
 		},
@@ -263,17 +234,14 @@ func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {
 			name:  "un_exists_item",
 			stock: []*persistent.StockModel{},
 			toUpdate: []*domain.ItemWithQuantity{
-				{
-					Id:       "item-3",
-					Quantity: 1000,
-				},
-				{
-					Id:       "item-1",
-					Quantity: 1,
-				},
+				{Id: "item-3", Quantity: 1000},
+				{Id: "item-1", Quantity: 1},
 			},
-			afterUpdate: nil,
-			wantErr:     true,
+			expectedReserved: map[string]int64{
+				"item-3": 0,
+				"item-1": 0,
+			},
+			wantErr: true,
 		},
 	}
 
@@ -282,28 +250,37 @@ func TestStockRepositoryMySQL_UpdateStock(t *testing.T) {
 			db := setupTestDB(t)
 			ctx := context.Background()
 
-			// 初始化库存数据
 			err := db.CreateBatch(ctx, tt.stock)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			repo := NewStockRepositoryMySQL(db)
-			err = repo.UpdateStock(ctx, tt.toUpdate, deductStockUpdateFunc)
+			err = repo.ReserveStock(ctx, tt.toUpdate, deductStockUpdateFunc)
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
-			// 验证更新结果，确保库存与期望一致
-			var ids []string
-			for _, item := range tt.toUpdate { // 获取应当被更新的商品 ID 列表
-				ids = append(ids, item.Id)
+			// 验证预占库存：用期望值的 key 作为查询范围
+			ids := make([]string, 0, len(tt.expectedReserved))
+			for id := range tt.expectedReserved {
+				ids = append(ids, id)
 			}
-			stock, err := repo.GetStock(ctx, ids)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.afterUpdate, stock)
+
+			stocks, err := db.BatchGetStockByID(ctx, ids)
+			require.NoError(t, err)
+
+			// 将结果转成 map，缺失的商品视为 0
+			gotReserved := make(map[string]int64, len(tt.expectedReserved))
+			for _, id := range ids {
+				gotReserved[id] = 0
+			}
+			for _, stock := range stocks {
+				gotReserved[stock.ProductID] = stock.Reserved
+			}
+
+			assert.Equal(t, tt.expectedReserved, gotReserved)
 		})
 	}
-
 }

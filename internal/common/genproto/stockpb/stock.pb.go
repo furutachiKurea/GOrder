@@ -110,27 +110,27 @@ func (x *GetItemsResponse) GetItems() []*orderpb.Item {
 	return nil
 }
 
-type CheckIfItemsInStockRequest struct {
+type ReserveStockRequest struct {
 	state         protoimpl.MessageState      `protogen:"open.v1"`
 	Items         []*orderpb.ItemWithQuantity `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CheckIfItemsInStockRequest) Reset() {
-	*x = CheckIfItemsInStockRequest{}
+func (x *ReserveStockRequest) Reset() {
+	*x = ReserveStockRequest{}
 	mi := &file_stockpb_stock_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CheckIfItemsInStockRequest) String() string {
+func (x *ReserveStockRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CheckIfItemsInStockRequest) ProtoMessage() {}
+func (*ReserveStockRequest) ProtoMessage() {}
 
-func (x *CheckIfItemsInStockRequest) ProtoReflect() protoreflect.Message {
+func (x *ReserveStockRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_stockpb_stock_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -142,40 +142,39 @@ func (x *CheckIfItemsInStockRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CheckIfItemsInStockRequest.ProtoReflect.Descriptor instead.
-func (*CheckIfItemsInStockRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReserveStockRequest.ProtoReflect.Descriptor instead.
+func (*ReserveStockRequest) Descriptor() ([]byte, []int) {
 	return file_stockpb_stock_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *CheckIfItemsInStockRequest) GetItems() []*orderpb.ItemWithQuantity {
+func (x *ReserveStockRequest) GetItems() []*orderpb.ItemWithQuantity {
 	if x != nil {
 		return x.Items
 	}
 	return nil
 }
 
-type CheckIfItemsInStockResponse struct {
+type ReserveStockResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	InStock       int32                  `protobuf:"varint,1,opt,name=in_stock,json=inStock,proto3" json:"in_stock,omitempty"`
 	Items         []*orderpb.Item        `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CheckIfItemsInStockResponse) Reset() {
-	*x = CheckIfItemsInStockResponse{}
+func (x *ReserveStockResponse) Reset() {
+	*x = ReserveStockResponse{}
 	mi := &file_stockpb_stock_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CheckIfItemsInStockResponse) String() string {
+func (x *ReserveStockResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CheckIfItemsInStockResponse) ProtoMessage() {}
+func (*ReserveStockResponse) ProtoMessage() {}
 
-func (x *CheckIfItemsInStockResponse) ProtoReflect() protoreflect.Message {
+func (x *ReserveStockResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_stockpb_stock_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -187,19 +186,12 @@ func (x *CheckIfItemsInStockResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CheckIfItemsInStockResponse.ProtoReflect.Descriptor instead.
-func (*CheckIfItemsInStockResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReserveStockResponse.ProtoReflect.Descriptor instead.
+func (*ReserveStockResponse) Descriptor() ([]byte, []int) {
 	return file_stockpb_stock_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *CheckIfItemsInStockResponse) GetInStock() int32 {
-	if x != nil {
-		return x.InStock
-	}
-	return 0
-}
-
-func (x *CheckIfItemsInStockResponse) GetItems() []*orderpb.Item {
+func (x *ReserveStockResponse) GetItems() []*orderpb.Item {
 	if x != nil {
 		return x.Items
 	}
@@ -214,15 +206,14 @@ const file_stockpb_stock_proto_rawDesc = "" +
 	"\x0fGetItemsRequest\x12\x19\n" +
 	"\bitem_ids\x18\x01 \x03(\tR\aitemIds\"7\n" +
 	"\x10GetItemsResponse\x12#\n" +
-	"\x05items\x18\x01 \x03(\v2\r.orderpb.ItemR\x05items\"M\n" +
-	"\x1aCheckIfItemsInStockRequest\x12/\n" +
-	"\x05items\x18\x01 \x03(\v2\x19.orderpb.ItemWithQuantityR\x05items\"]\n" +
-	"\x1bCheckIfItemsInStockResponse\x12\x19\n" +
-	"\bin_stock\x18\x01 \x01(\x05R\ainStock\x12#\n" +
-	"\x05items\x18\x02 \x03(\v2\r.orderpb.ItemR\x05items2\xb1\x01\n" +
+	"\x05items\x18\x01 \x03(\v2\r.orderpb.ItemR\x05items\"F\n" +
+	"\x13ReserveStockRequest\x12/\n" +
+	"\x05items\x18\x01 \x03(\v2\x19.orderpb.ItemWithQuantityR\x05items\";\n" +
+	"\x14ReserveStockResponse\x12#\n" +
+	"\x05items\x18\x02 \x03(\v2\r.orderpb.ItemR\x05items2\x9c\x01\n" +
 	"\fStockService\x12?\n" +
-	"\bGetItems\x12\x18.stockpb.GetItemsRequest\x1a\x19.stockpb.GetItemsResponse\x12`\n" +
-	"\x13CheckIfItemsInStock\x12#.stockpb.CheckIfItemsInStockRequest\x1a$.stockpb.CheckIfItemsInStockResponseB:Z8github.com/furutachiKurea/gorder/common/genproto/stockpbb\x06proto3"
+	"\bGetItems\x12\x18.stockpb.GetItemsRequest\x1a\x19.stockpb.GetItemsResponse\x12K\n" +
+	"\fReserveStock\x12\x1c.stockpb.ReserveStockRequest\x1a\x1d.stockpb.ReserveStockResponseB:Z8github.com/furutachiKurea/gorder/common/genproto/stockpbb\x06proto3"
 
 var (
 	file_stockpb_stock_proto_rawDescOnce sync.Once
@@ -238,21 +229,21 @@ func file_stockpb_stock_proto_rawDescGZIP() []byte {
 
 var file_stockpb_stock_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_stockpb_stock_proto_goTypes = []any{
-	(*GetItemsRequest)(nil),             // 0: stockpb.GetItemsRequest
-	(*GetItemsResponse)(nil),            // 1: stockpb.GetItemsResponse
-	(*CheckIfItemsInStockRequest)(nil),  // 2: stockpb.CheckIfItemsInStockRequest
-	(*CheckIfItemsInStockResponse)(nil), // 3: stockpb.CheckIfItemsInStockResponse
-	(*orderpb.Item)(nil),                // 4: orderpb.Item
-	(*orderpb.ItemWithQuantity)(nil),    // 5: orderpb.ItemWithQuantity
+	(*GetItemsRequest)(nil),          // 0: stockpb.GetItemsRequest
+	(*GetItemsResponse)(nil),         // 1: stockpb.GetItemsResponse
+	(*ReserveStockRequest)(nil),      // 2: stockpb.ReserveStockRequest
+	(*ReserveStockResponse)(nil),     // 3: stockpb.ReserveStockResponse
+	(*orderpb.Item)(nil),             // 4: orderpb.Item
+	(*orderpb.ItemWithQuantity)(nil), // 5: orderpb.ItemWithQuantity
 }
 var file_stockpb_stock_proto_depIdxs = []int32{
 	4, // 0: stockpb.GetItemsResponse.items:type_name -> orderpb.Item
-	5, // 1: stockpb.CheckIfItemsInStockRequest.items:type_name -> orderpb.ItemWithQuantity
-	4, // 2: stockpb.CheckIfItemsInStockResponse.items:type_name -> orderpb.Item
+	5, // 1: stockpb.ReserveStockRequest.items:type_name -> orderpb.ItemWithQuantity
+	4, // 2: stockpb.ReserveStockResponse.items:type_name -> orderpb.Item
 	0, // 3: stockpb.StockService.GetItems:input_type -> stockpb.GetItemsRequest
-	2, // 4: stockpb.StockService.CheckIfItemsInStock:input_type -> stockpb.CheckIfItemsInStockRequest
+	2, // 4: stockpb.StockService.ReserveStock:input_type -> stockpb.ReserveStockRequest
 	1, // 5: stockpb.StockService.GetItems:output_type -> stockpb.GetItemsResponse
-	3, // 6: stockpb.StockService.CheckIfItemsInStock:output_type -> stockpb.CheckIfItemsInStockResponse
+	3, // 6: stockpb.StockService.ReserveStock:output_type -> stockpb.ReserveStockResponse
 	5, // [5:7] is the sub-list for method output_type
 	3, // [3:5] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name

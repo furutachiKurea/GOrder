@@ -9,5 +9,5 @@ import (
 
 type StockInterface interface {
 	GetItems(ctx context.Context, itemIDs []string) ([]*orderpb.Item, error)
-	CheckIfItemsInStock(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.CheckIfItemsInStockResponse, error)
+	ReserveStock(ctx context.Context, items []*orderpb.ItemWithQuantity) (*stockpb.ReserveStockResponse, error)
 }

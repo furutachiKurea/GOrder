@@ -7,7 +7,6 @@ import (
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 )
 
-// stub data
 var stub = map[string]*domain.Item{
 	"item_id": {
 		Id:       "foo_item",
@@ -35,12 +34,14 @@ var stub = map[string]*domain.Item{
 	},
 }
 
+// Deprecated: use StockRepositoryMySQL instead.
 type MemoryStockRepository struct {
 	lock  *sync.RWMutex
 	store map[string]*domain.Item
 }
 
-func (m MemoryStockRepository) UpdateStock(ctx context.Context, data []*domain.ItemWithQuantity,
+// Deprecated: use StockRepositoryMySQL.ReserveStock.
+func (m MemoryStockRepository) ReserveStock(ctx context.Context, data []*domain.ItemWithQuantity,
 	updateFn func(ctx context.Context,
 		existing []*domain.ItemWithQuantity,
 		query []*domain.ItemWithQuantity,
@@ -50,6 +51,7 @@ func (m MemoryStockRepository) UpdateStock(ctx context.Context, data []*domain.I
 	panic("implement me")
 }
 
+// Deprecated: use NewStockRepositoryMySQL with persistent.MySQL.
 func NewMemoryStockRepository() *MemoryStockRepository {
 	return &MemoryStockRepository{
 		lock:  &sync.RWMutex{},
@@ -57,6 +59,7 @@ func NewMemoryStockRepository() *MemoryStockRepository {
 	}
 }
 
+// Deprecated: use StockRepositoryMySQL.GetItems.
 func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*domain.Item, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
@@ -81,6 +84,7 @@ func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*d
 	return res, nil
 }
 
+// Deprecated: use StockRepositoryMySQL.GetStock.
 func (m MemoryStockRepository) GetStock(ctx context.Context, ids []string) ([]*domain.ItemWithQuantity, error) {
 	// TODO implement me
 	panic("implement me")

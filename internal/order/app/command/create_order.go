@@ -119,7 +119,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 
 }
 
-// validate 校验订单是否合法，合并商品数量，检查库存后返回 Item
+// validate 校验订单是否合法，合并商品数量，库存充足并正确预扣库存后返回订单 Item
 func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWithQuantity) ([]*domain.Item, error) {
 	if len(items) == 0 {
 		return nil, errors.New("must have at least one item")
@@ -128,7 +128,7 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 	items = packItems(items)
 
 	log.Debug().Any("items", items).Msg("packed items")
-	resp, err := c.stockGRPC.CheckIfItemsInStock(ctx, convertor.NewItemWithQuantityConvertor().DomainsToProtos(items))
+	resp, err := c.stockGRPC.ReserveStock(ctx, convertor.NewItemWithQuantityConvertor().DomainsToProtos(items))
 	if err != nil {
 		return nil, status.Convert(err).Err()
 	}

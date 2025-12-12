@@ -43,11 +43,11 @@ func (s StockRepositoryMySQL) GetStock(ctx context.Context, ids []string) ([]*do
 	return result, nil
 }
 
-// UpdateStock 更新库存，使用悲观锁保证一致性
-func (s StockRepositoryMySQL) UpdateStock(
+// ReserveStock 预占库存，使用悲观锁保证一致性
+func (s StockRepositoryMySQL) ReserveStock(
 	ctx context.Context,
 	data []*domain.ItemWithQuantity,
-	updateFn func(
+	_ func(
 		ctx context.Context,
 		existing []*domain.ItemWithQuantity,
 		query []*domain.ItemWithQuantity,
@@ -60,96 +60,120 @@ func (s StockRepositoryMySQL) UpdateStock(
 			}
 		}()
 
-		var dest []*persistent.StockModel
-		if err = tx.WithContext(ctx).
-			Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
-			Model(persistent.StockModel{}).
-			Where("product_id IN (?)", getIDsFromItems(data)).
-			Find(&dest).Error; err != nil {
-			return fmt.Errorf("get stock by ids from db: %w", err)
-		}
-
-		// 如果存在商品库存记录数量少于请求数量，说明请求了不存在的商品
-		if missingIDs := getMissingItemIDs(data, dest); len(missingIDs) > 0 {
-			return domain.NotFoundError{Missing: missingIDs}
-		}
-
-		existing := s.unmarshalFromModels(dest)
-		updated, err := updateFn(ctx, existing, data)
+		stock, err := s.getAndLockStock(tx, ctx, data)
 		if err != nil {
 			return err
 		}
 
-		queryMap := make(map[string]int64)
-		for _, item := range data {
-			queryMap[item.Id] += item.Quantity
+		// 如果获取到的商品库存记录数量少于请求数量，说明请求了不存在的商品
+		if missingIDs := findMissingProductIDs(data, stock); len(missingIDs) > 0 {
+			return domain.NotFoundError{Missing: missingIDs}
 		}
 
-		var (
-			failedOn []struct {
-				ID   string
-				Want int64
-				Have int64
-			}
-			failedProductIDs []string
-		)
-
-		for _, upd := range updated {
-			toDeduct := queryMap[upd.Id]
-			result := tx.Model(persistent.StockModel{}).
-				Where("product_id = ? AND quantity >= ?", upd.Id, toDeduct).
-				Update("quantity", gorm.Expr("quantity - ?", toDeduct))
-			if result.Error != nil {
-				if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-					return fmt.Errorf("product id %s not found: %w", upd.Id, result.Error)
-				}
-				return fmt.Errorf("update stock in db: %w", result.Error)
-			}
-			// 未更新成功，说明库存不足，记录失败信息
-			if result.RowsAffected == 0 {
-				failedProductIDs = append(failedProductIDs, upd.Id)
-				failedOn = append(failedOn, struct {
-					ID   string
-					Want int64
-					Have int64
-				}{ID: upd.Id, Want: toDeduct, Have: 0})
-			}
-		}
-
-		// 如果存在失败商品
-		if len(failedProductIDs) > 0 {
-			var failedStocks []persistent.StockModel
-			if err = tx.WithContext(ctx).
-				Model(persistent.StockModel{}).
-				Where("product_id IN (?)", failedProductIDs).
-				Find(&failedStocks).Error; err != nil {
-				return fmt.Errorf("get failed stocks from db: %w", err)
-			}
-
-			stockHave := make(map[string]int64)
-			for _, stock := range failedStocks {
-				stockHave[stock.ProductID] = stock.Quantity
-			}
-
-			for i, fail := range failedOn {
-				failedOn[i].Have = stockHave[fail.ID]
-			}
-
-			return domain.ExceedStockError{FailedOn: failedOn}
-		}
-		return nil
+		err = s.tryReserveStock(ctx, tx, data)
+		return
 	})
 }
 
-// getMissingItemIDs 比较期望的商品列表和实际从数据库获取的库存列表，返回缺失的商品 ID 列表
-func getMissingItemIDs(expect []*domain.ItemWithQuantity, got []*persistent.StockModel) []string {
+// getAndLockStock 获取并锁定库存记录
+func (s StockRepositoryMySQL) getAndLockStock(
+	tx *gorm.DB,
+	ctx context.Context,
+	data []*domain.ItemWithQuantity,
+) ([]*persistent.StockModel, error) {
+
+	var stock []*persistent.StockModel
+	err := tx.WithContext(ctx).
+		Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
+		Model(persistent.StockModel{}).
+		Where("product_id IN (?)", getIDsFromItems(data)).
+		Find(&stock).Error
+	if err != nil {
+		return nil, fmt.Errorf("get stock by ids from db: %w", err)
+	}
+
+	return stock, nil
+}
+
+// tryReserveStock 尝试预占库存
+func (s StockRepositoryMySQL) tryReserveStock(
+	ctx context.Context,
+	tx *gorm.DB,
+	data []*domain.ItemWithQuantity,
+) error {
+
+	requiredQuantities := make(map[string]int64)
+	for _, item := range data {
+		requiredQuantities[item.Id] += item.Quantity
+	}
+
+	var (
+		failedOn []struct {
+			ID   string
+			Want int64
+			Have int64
+		}
+		failedProductIDs []string
+	)
+	for productID, required := range requiredQuantities {
+		if required == 0 {
+			continue
+		}
+
+		result := tx.Model(persistent.StockModel{}).
+			Where("product_id = ? AND quantity - reserved >= ?", productID, required).
+			Update("reserved", gorm.Expr("reserved + ?", required))
+
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("product id %s not found: %w", productID, result.Error)
+			}
+			return fmt.Errorf("update stock in db: %w", result.Error)
+		}
+
+		// 未更新成功，说明库存不足，记录失败信息
+		if result.RowsAffected == 0 {
+			failedProductIDs = append(failedProductIDs, productID)
+			failedOn = append(failedOn, struct {
+				ID   string
+				Want int64
+				Have int64
+			}{ID: productID, Want: required, Have: 0})
+		}
+	}
+
+	// 如果存在失败商品
+	if len(failedProductIDs) > 0 {
+		var failed []persistent.StockModel
+		if err := tx.WithContext(ctx).
+			Model(persistent.StockModel{}).
+			Where("product_id IN (?)", failedProductIDs).
+			Find(&failed).Error; err != nil {
+			return fmt.Errorf("get failed stocks from db: %w", err)
+		}
+
+		have := make(map[string]int64)
+		for _, item := range failed {
+			have[item.ProductID] += item.Quantity - item.Reserved
+		}
+
+		for i, fail := range failedOn {
+			failedOn[i].Have = have[fail.ID]
+		}
+		return domain.ExceedStockError{FailedOn: failedOn}
+	}
+	return nil
+}
+
+// findMissingProductIDs 比较期望的商品列表和实际从数据库获取的库存列表，返回缺失的商品 ID 列表
+func findMissingProductIDs(requested []*domain.ItemWithQuantity, stock []*persistent.StockModel) []string {
 	var missingIDs []string
 	gotSet := make(map[string]struct{})
-	for _, item := range got {
+	for _, item := range stock {
 		gotSet[item.ProductID] = struct{}{}
 	}
 
-	for _, item := range expect {
+	for _, item := range requested {
 		if _, ok := gotSet[item.Id]; !ok {
 			missingIDs = append(missingIDs, item.Id)
 		}
@@ -166,16 +190,4 @@ func getIDsFromItems(items []*domain.ItemWithQuantity) []string {
 	}
 
 	return ids
-}
-
-func (s StockRepositoryMySQL) unmarshalFromModels(dest []*persistent.StockModel) []*domain.ItemWithQuantity {
-	var res []*domain.ItemWithQuantity
-	for _, item := range dest {
-		res = append(res, &domain.ItemWithQuantity{
-			Id:       item.ProductID,
-			Quantity: item.Quantity,
-		})
-	}
-
-	return res
 }

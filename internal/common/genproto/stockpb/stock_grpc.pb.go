@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StockService_GetItems_FullMethodName            = "/stockpb.StockService/GetItems"
-	StockService_CheckIfItemsInStock_FullMethodName = "/stockpb.StockService/CheckIfItemsInStock"
+	StockService_GetItems_FullMethodName     = "/stockpb.StockService/GetItems"
+	StockService_ReserveStock_FullMethodName = "/stockpb.StockService/ReserveStock"
 )
 
 // StockServiceClient is the client API for StockService service.
@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StockServiceClient interface {
 	GetItems(ctx context.Context, in *GetItemsRequest, opts ...grpc.CallOption) (*GetItemsResponse, error)
-	CheckIfItemsInStock(ctx context.Context, in *CheckIfItemsInStockRequest, opts ...grpc.CallOption) (*CheckIfItemsInStockResponse, error)
+	ReserveStock(ctx context.Context, in *ReserveStockRequest, opts ...grpc.CallOption) (*ReserveStockResponse, error)
 }
 
 type stockServiceClient struct {
@@ -49,10 +49,10 @@ func (c *stockServiceClient) GetItems(ctx context.Context, in *GetItemsRequest, 
 	return out, nil
 }
 
-func (c *stockServiceClient) CheckIfItemsInStock(ctx context.Context, in *CheckIfItemsInStockRequest, opts ...grpc.CallOption) (*CheckIfItemsInStockResponse, error) {
+func (c *stockServiceClient) ReserveStock(ctx context.Context, in *ReserveStockRequest, opts ...grpc.CallOption) (*ReserveStockResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CheckIfItemsInStockResponse)
-	err := c.cc.Invoke(ctx, StockService_CheckIfItemsInStock_FullMethodName, in, out, cOpts...)
+	out := new(ReserveStockResponse)
+	err := c.cc.Invoke(ctx, StockService_ReserveStock_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *stockServiceClient) CheckIfItemsInStock(ctx context.Context, in *CheckI
 // for forward compatibility.
 type StockServiceServer interface {
 	GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error)
-	CheckIfItemsInStock(context.Context, *CheckIfItemsInStockRequest) (*CheckIfItemsInStockResponse, error)
+	ReserveStock(context.Context, *ReserveStockRequest) (*ReserveStockResponse, error)
 }
 
 // UnimplementedStockServiceServer should be embedded to have
@@ -77,8 +77,8 @@ type UnimplementedStockServiceServer struct{}
 func (UnimplementedStockServiceServer) GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetItems not implemented")
 }
-func (UnimplementedStockServiceServer) CheckIfItemsInStock(context.Context, *CheckIfItemsInStockRequest) (*CheckIfItemsInStockResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckIfItemsInStock not implemented")
+func (UnimplementedStockServiceServer) ReserveStock(context.Context, *ReserveStockRequest) (*ReserveStockResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReserveStock not implemented")
 }
 func (UnimplementedStockServiceServer) testEmbeddedByValue() {}
 
@@ -118,20 +118,20 @@ func _StockService_GetItems_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StockService_CheckIfItemsInStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckIfItemsInStockRequest)
+func _StockService_ReserveStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReserveStockRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StockServiceServer).CheckIfItemsInStock(ctx, in)
+		return srv.(StockServiceServer).ReserveStock(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StockService_CheckIfItemsInStock_FullMethodName,
+		FullMethod: StockService_ReserveStock_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StockServiceServer).CheckIfItemsInStock(ctx, req.(*CheckIfItemsInStockRequest))
+		return srv.(StockServiceServer).ReserveStock(ctx, req.(*ReserveStockRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -148,8 +148,8 @@ var StockService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _StockService_GetItems_Handler,
 		},
 		{
-			MethodName: "CheckIfItemsInStock",
-			Handler:    _StockService_CheckIfItemsInStock_Handler,
+			MethodName: "ReserveStock",
+			Handler:    _StockService_ReserveStock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
