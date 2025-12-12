@@ -34,18 +34,17 @@ func NewApplication(ctx context.Context) (app app.Application, close func()) {
 		viper.GetString("rabbitmq.host"),
 		viper.GetString("rabbitmq.port"),
 	)
-
-	return newApplication(ctx, stockGRPC, ch), func() {
+	mongoClient, disconnectMongo := newMongoClient(ctx)
+	return newApplication(ctx, stockGRPC, mongoClient, ch), func() {
 		_ = closeStockClient()
 		_ = ch.Close()
 		_ = closeCoon()
+		_ = disconnectMongo(ctx)
 	}
 
 }
 
-func newApplication(ctx context.Context, stockClient query.StockInterface, ch *amqp.Channel) app.Application {
-	// orderRepo := adapter.NewMemoryOrderRepository()
-	mongoClient := newMongoClient(ctx)
+func newApplication(ctx context.Context, stockClient query.StockInterface, mongoClient *mongo.Client, ch *amqp.Channel) app.Application {
 	orderRepo := adapter.NewOrderRepositoryMongo(mongoClient)
 	logger := log.Logger
 	metricsClient := metrics.TodoMetrics{}
@@ -75,7 +74,7 @@ func newApplication(ctx context.Context, stockClient query.StockInterface, ch *a
 
 }
 
-func newMongoClient(ctx context.Context) *mongo.Client {
+func newMongoClient(ctx context.Context) (*mongo.Client, func(ctx context.Context) error) {
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s",
 		viper.GetString("mongo.user"),
 		viper.GetString("mongo.password"),
@@ -92,5 +91,5 @@ func newMongoClient(ctx context.Context) *mongo.Client {
 		panic(err)
 	}
 
-	return c
+	return c, c.Disconnect
 }
