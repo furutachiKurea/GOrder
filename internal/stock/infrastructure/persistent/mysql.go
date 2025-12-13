@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -60,8 +62,15 @@ func (d MySQL) StartTransaction(fc func(tx *gorm.DB) error) error {
 
 // BatchGetStockByID 从数据库中使用 product IDs 批量获取库存信息
 func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) ([]StockModel, error) {
+	_, deferlog := logging.WhenMySQL(ctx, "BatchGetStockByID", productIDs)
+
 	var res []StockModel
-	tx := d.db.WithContext(ctx).Where("product_id IN ?", productIDs).Find(&res)
+	tx := d.db.WithContext(ctx).
+		Model(StockModel{}).
+		Clauses(clause.Returning{}).
+		Where("product_id IN ?", productIDs).
+		Find(&res)
+	defer deferlog(res, &tx.Error)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -70,5 +79,9 @@ func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) ([]St
 }
 
 func (d MySQL) CreateBatch(ctx context.Context, create []*StockModel) error {
-	return gorm.G[*StockModel](d.db).CreateInBatches(ctx, &create, 100)
+	_, deferlog := logging.WhenMySQL(ctx, "CreateBatch", create)
+	var returning StockModel
+	err := d.db.WithContext(ctx).Model(&returning).Clauses(clause.Returning{}).Create(create).Error
+	defer deferlog(returning, &err)
+	return err
 }

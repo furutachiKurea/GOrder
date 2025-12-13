@@ -204,8 +204,14 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:  "un_exists_item",
-			stock: []*persistent.StockModel{},
+			name: "un_exists_item",
+			stock: []*persistent.StockModel{
+				{
+					ProductID: "item-not-exists",
+					Quantity:  0,
+					Reserved:  0,
+				},
+			},
 			toUpdate: []*domain.ItemWithQuantity{
 				{Id: "item-3", Quantity: 1000},
 				{Id: "item-1", Quantity: 1},

@@ -71,7 +71,7 @@ func NewPendingOrder(customerID string, items []*Item) (*Order, error) {
 func (o *Order) UpdatesStatus(status string) {
 	statusTable := map[string][]string{
 		"pending":             {"waiting_for_payment", "canceled"},
-		"waiting_for_payment": {"paid", "canceled"},
+		"waiting_for_payment": {"paid", "ready", "canceled"},
 		"paid":                {"ready"},
 	}
 
