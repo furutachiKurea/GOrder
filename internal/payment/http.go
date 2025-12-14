@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/furutachiKurea/gorder/common/broker"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/payment/domain"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +19,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v84"
 	"github.com/stripe/stripe-go/v84/webhook"
-	"go.opentelemetry.io/otel"
 )
 
 type PaymentHandler struct {
@@ -77,42 +78,32 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 		}
 
 		if session.PaymentStatus == stripe.CheckoutSessionPaymentStatusPaid {
-			ctx, cancel := context.WithCancel(c)
+			ctx, cancel := context.WithCancel(c.Request.Context())
 			defer cancel()
 
 			var items []*orderpb.Item
 			_ = json.Unmarshal([]byte(session.Metadata["items"]), &items)
 
-			marshalledOrder, err := json.Marshal(&domain.Order{
-				ID:         session.Metadata["order_id"],
-				CustomerID: session.Metadata["customer_id"],
-				Status:     string(session.PaymentStatus),
-				Items:      items,
-			})
-			if err != nil {
-				err = fmt.Errorf("marshalling domain.order: %w", err)
-				c.JSON(http.StatusInternalServerError, err.Error())
-				return
-			}
-
-			t := otel.Tracer("rabbitmq")
-			mqCtx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
+			mqCtx, span := tracing.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
 			defer span.End()
 
-			headers := broker.InjectRabbitMQHeaders(mqCtx)
-			_ = h.channel.PublishWithContext(mqCtx, broker.EventOrderPaid, "", false, false,
-				amqp.Publishing{
-					ContentType:  "application/json",
-					DeliveryMode: amqp.Persistent,
-					Body:         marshalledOrder,
-					Headers:      headers,
-				})
-			log.Info().Ctx(mqCtx).
-				Str("message_body", string(marshalledOrder)).
-				Msgf("message published to %s", broker.EventOrderPaid)
+			_ = broker.PublishEvent(mqCtx, &broker.PublishEventReq{
+				Channel:  h.channel,
+				Routing:  broker.FanOut,
+				Queue:    "",
+				Exchange: broker.EventOrderPaid,
+				Body: &domain.Order{
+					ID:         session.Metadata["order_id"],
+					CustomerID: session.Metadata["customer_id"],
+					Status:     string(session.PaymentStatus),
+					Items:      items,
+				},
+			})
+			log.Info().Ctx(mqCtx).Msgf("message published to %s", broker.EventOrderPaid)
 		}
 	default:
 		log.Warn().Ctx(c.Request.Context()).Str("event type", string(event.Type)).Msg("Unhandled event type")
+		err = errors.New("unhandled event type")
 	}
 
 	c.JSON(http.StatusOK, nil)

@@ -6,11 +6,10 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/broker"
+	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/order/app"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
-	"go.opentelemetry.io/otel"
-
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
 )
@@ -57,8 +56,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		Msgf("order received message from %s", q.Name)
 
 	ctx := broker.ExtractRabbitMQHeaders(context.Background(), msg.Headers)
-	t := otel.Tracer("rabbitmq")
-	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
+	ctx, span := tracing.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
 	defer span.End()
 
 	var err error

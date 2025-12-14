@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// TODO return 的 logger 无法实际的被返回的函数使用
+
 func WhenCommandExecute(ctx context.Context, commandName string, cmd any, err error) {
 	l := log.With().Any("cmd", cmd).Logger()
 	if err == nil {
@@ -36,14 +38,13 @@ func WhenRequest(ctx context.Context, method string, args ...any) (zerolog.Logge
 	}
 }
 
-func WhenEventPublish(ctx context.Context, method string, args ...any) func(any, *error) {
+func WhenEventPublish(ctx context.Context, args ...any) (zerolog.Logger, func(any, *error)) {
 	l := log.With().
-		Str(Method, method).
 		Str(Args, formatArgs(args)).
 		Logger()
 
 	start := time.Now()
-	return func(resp any, err *error) {
+	return l, func(resp any, err *error) {
 		l = l.With().Int(Cost, int(time.Since(start).Milliseconds())).
 			Any(Response, resp).Logger()
 
@@ -51,9 +52,9 @@ func WhenEventPublish(ctx context.Context, method string, args ...any) func(any,
 			l.Error().
 				Ctx(ctx).
 				Str(Error, (*err).Error()).
-				Msgf("%s_mq_publish_failed", method)
+				Msg("_mq_publish_failed")
 		}
 
-		l.Info().Ctx(ctx).Msgf("%s_mq_publish_success", method)
+		l.Info().Ctx(ctx).Msg("_mq_publish_success")
 	}
 }

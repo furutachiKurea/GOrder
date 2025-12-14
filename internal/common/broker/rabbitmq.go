@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/logging"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
@@ -77,7 +78,20 @@ func createDLX(ch *amqp.Channel) error {
 	return err
 }
 
-func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error {
+func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) (err error) {
+	var retryCount int64
+
+	l, deferlog := logging.WhenRequest(ctx, "HandleRetry", map[string]any{
+		"delivery":        d,
+		"max_retry_count": maxRetryCount,
+	})
+	defer func() {
+		deferlog(nil, &err)
+	}()
+
+	log.Info().Ctx(ctx).
+		Any("delivery", d).
+		Msg("handle_retry_start")
 	if d.Headers == nil {
 		d.Headers = make(amqp.Table)
 	}
@@ -89,10 +103,11 @@ func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error
 
 	retryCount++
 	d.Headers[amqpRetryHeaderKey] = retryCount
+	l = l.With().Int64("retry_count", retryCount).Logger()
 
 	if retryCount > maxRetryCount {
-		log.Info().Str("message_id", d.MessageId).Msg("moving message to dlq")
-		return ch.PublishWithContext(ctx, "", DLQ, false, false, amqp.Publishing{
+		log.Info().Ctx(ctx).Str("message_id", d.MessageId).Msg("moving message to dlq")
+		return doPublish(ctx, ch, "", DLQ, false, false, amqp.Publishing{
 			Headers:      d.Headers,
 			ContentType:  "application/json",
 			Body:         d.Body,
@@ -100,9 +115,9 @@ func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error
 		})
 	}
 
-	log.Info().Str("message_id", d.MessageId).Int64("retry_count", retryCount).Msg("retrying message")
+	log.Debug().Ctx(ctx).Str("message_id", d.MessageId).Int64("retry_count", retryCount).Msg("retrying message")
 	time.Sleep(time.Second * time.Duration(retryCount))
-	return ch.PublishWithContext(ctx, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
+	return doPublish(ctx, ch, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
 		Headers:      d.Headers,
 		ContentType:  "application/json",
 		Body:         d.Body,
@@ -134,6 +149,7 @@ func (r RabbitMQHeaderCarrier) Keys() []string {
 	return keys
 }
 
+// InjectRabbitMQHeaders 将 context 注入 RabbitMQ header 以进行分布式追踪
 func InjectRabbitMQHeaders(ctx context.Context) map[string]any {
 	carrier := make(RabbitMQHeaderCarrier)
 	otel.GetTextMapPropagator().Inject(ctx, &carrier)

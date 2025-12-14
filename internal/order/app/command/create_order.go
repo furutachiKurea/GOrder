@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -70,13 +69,9 @@ func NewCreateOrderHandler(
 func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*CreateOrderResult, error) {
 	var err error
 	defer logging.WhenCommandExecute(ctx, "CreateOrderHandler", cmd, err)
-	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
-	if err != nil {
-		return nil, err
-	}
 
 	t := otel.Tracer("rabbitmq")
-	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", q.Name))
+	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
 	defer span.End()
 
 	validItems, err := c.validate(ctx, cmd.Items)
@@ -96,24 +91,16 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	if err != nil {
 		return nil, fmt.Errorf("create order: %w", err)
 	}
-
-	// 服务间通信使用 protobuf 格式
-	marshalledOrder, err := json.Marshal(convertor.NewOrderConvertor().DomainToProto(order))
-	if err != nil {
-		return nil, err
-	}
-
-	header := broker.InjectRabbitMQHeaders(ctx)
-
-	// send order created event to RabbitMQ
-	err = c.channel.PublishWithContext(ctx, "", q.Name, false, false, amqp.Publishing{
-		ContentType:  "application/json",
-		DeliveryMode: amqp.Persistent,
-		Body:         marshalledOrder,
-		Headers:      header,
+	log.Debug().Ctx(ctx).Any("order", order).Msg("create order in repository")
+	err = broker.PublishEvent(ctx, &broker.PublishEventReq{
+		Channel:  c.channel,
+		Routing:  broker.Direct,
+		Queue:    broker.EventOrderCreated,
+		Exchange: "",
+		Body:     convertor.NewOrderConvertor().DomainToProto(order),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("publish event error q.Name=%s, err:%w", q.Name, err)
+		return nil, fmt.Errorf("publish event error q.Name=%s, err:%w", broker.EventOrderPaid, err)
 	}
 
 	return &CreateOrderResult{

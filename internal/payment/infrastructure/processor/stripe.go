@@ -33,7 +33,7 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 	for _, item := range order.Items {
 		items = append(items, &stripe.CheckoutSessionLineItemParams{
 			Price:    stripe.String(item.PriceId),
-			Quantity: stripe.Int64(int64(item.Quantity)),
+			Quantity: stripe.Int64(item.Quantity),
 		})
 	}
 	marshalledItems, _ := json.Marshal(order.Items)
@@ -54,7 +54,7 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 
 	result, err := session.New(params)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("create payment link: %w", err)
 	}
 
 	return result.URL, nil
