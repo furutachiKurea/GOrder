@@ -61,36 +61,31 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	defer func() {
 		if err != nil {
 			_ = msg.Nack(false, false)
+			log.Warn().Ctx(ctx).
+				Err(err).
+				Str("from", q.Name).
+				Str("msg", string(msg.Body)).
+				Msg("consume failed")
 		} else {
 			_ = msg.Ack(false)
+			span.AddEvent("payment.created")
+			log.Info().Ctx(ctx).Msg("consume success")
 		}
 	}()
 
 	o := &orderpb.Order{}
-	if err := json.Unmarshal(msg.Body, o); err != nil {
-		log.Info().
-			Err(err).
-			Msg("failed to unmarshal msg to body")
+	if err = json.Unmarshal(msg.Body, o); err != nil {
+		err = fmt.Errorf("unmarshal msg to body: %w", err)
 		return
 	}
 
-	log.Debug().Any("unmarshalled_order", o).Msg("unmarshalled order from message")
+	log.Debug().Ctx(ctx).Any("unmarshalled_order", o).Msg("unmarshalled order from message")
 	_, err = c.app.Commands.CreatePayment.Handle(ctx, command.CreatePayment{Order: o})
 	if err != nil {
-		log.Info().
-			Err(err).
-			Msg("failed to create payment")
-
+		err = fmt.Errorf("create payment: %w", err)
 		if err = broker.HandlerRetry(ctx, ch, &msg); err != nil {
-			log.Warn().Err(err).
-				Str("message_id", msg.MessageId).
-				Msg("retry_error, error handling retry")
+			err = fmt.Errorf("handle retry, messageId=%s: %w", msg.MessageId, err)
 			return
 		}
-		return
 	}
-
-	span.AddEvent("payment.created")
-
-	log.Info().Msg("consume success")
 }

@@ -61,27 +61,26 @@ func (d MySQL) StartTransaction(fc func(tx *gorm.DB) error) error {
 }
 
 // BatchGetStockByID 从数据库中使用 product IDs 批量获取库存信息
-func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) ([]StockModel, error) {
+func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) (res []StockModel, err error) {
 	_, deferlog := logging.WhenMySQL(ctx, "BatchGetStockByID", productIDs)
+	defer deferlog(res, &err)
 
-	var res []StockModel
-	tx := d.db.WithContext(ctx).
+	err = d.db.WithContext(ctx).
 		Model(StockModel{}).
 		Clauses(clause.Returning{}).
 		Where("product_id IN ?", productIDs).
-		Find(&res)
-	defer deferlog(res, &tx.Error)
-	if tx.Error != nil {
-		return nil, tx.Error
+		Find(&res).Error
+	if err != nil {
+		return nil, err
 	}
 
 	return res, nil
 }
 
-func (d MySQL) CreateBatch(ctx context.Context, create []*StockModel) error {
-	_, deferlog := logging.WhenMySQL(ctx, "CreateBatch", create)
+func (d MySQL) CreateBatch(ctx context.Context, create []*StockModel) (err error) {
 	var returning StockModel
-	err := d.db.WithContext(ctx).Model(&returning).Clauses(clause.Returning{}).Create(create).Error
+	_, deferlog := logging.WhenMySQL(ctx, "CreateBatch", create)
 	defer deferlog(returning, &err)
+	err = d.db.WithContext(ctx).Model(&returning).Clauses(clause.Returning{}).Create(create).Error
 	return err
 }

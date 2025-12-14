@@ -47,7 +47,7 @@ func (s StockRepositoryMySQL) ReserveStock(ctx context.Context, items []*domain.
 	return s.db.StartTransaction(func(tx *gorm.DB) (err error) {
 		defer func() {
 			if err != nil {
-				log.Warn().Err(err).Msg("reserve stock transaction failed")
+				log.Warn().Ctx(ctx).Err(err).Msg("reserve stock transaction failed")
 			}
 		}()
 
@@ -70,7 +70,7 @@ func (s StockRepositoryMySQL) ConfirmStockReservation(ctx context.Context, items
 	return s.db.StartTransaction(func(tx *gorm.DB) (err error) {
 		defer func() {
 			if err != nil {
-				log.Warn().Err(err).Msg("confirm stock reservation transaction failed")
+				log.Warn().Ctx(ctx).Err(err).Msg("confirm stock reservation transaction failed")
 			}
 		}()
 

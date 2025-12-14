@@ -8,6 +8,7 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/decorator"
 	"github.com/furutachiKurea/gorder/common/handler/redis"
+	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 
 	"github.com/rs/zerolog"
@@ -53,12 +54,15 @@ func NewReserveStockHandler(
 }
 
 func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) ([]*domain.Item, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "ReserveStockHandler", command, err)
+
 	if err := lock(ctx, getLockKey(command.Items)); err != nil {
 		return nil, fmt.Errorf("redis lock, key=%s: %w", getLockKey(command.Items), err)
 	}
 	defer func() {
 		if err := unlock(ctx, getLockKey(command.Items)); err != nil {
-			log.Warn().Err(err).Msg("redis unlock fail")
+			log.Warn().Ctx(ctx).Err(err).Msg("redis unlock fail")
 		}
 	}()
 

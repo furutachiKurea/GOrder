@@ -95,11 +95,8 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		return
 	}
 
-	cook(o)
+	cook(ctx, o)
 	span.AddEvent(fmt.Sprintf("order_cook: %v", &o))
-	// TODO 这里会和 order 的 consumer 状态更新冲突，如果 kitchen 先完成，
-	//  order 服务更新状态会覆盖 kitchen 的更新，此时仍然为 paid 状态。
-	//  不过现在的 kitchen 会 sleep 五秒，暂时不会出现这个问题
 	if err = c.orderGRPC.UpdateOrder(ctx, &orderpb.Order{
 		Id:          o.ID,
 		CustomerId:  o.CustomerID,
@@ -116,8 +113,8 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	log.Info().Msg("kitchen.order.finished.updated")
 }
 
-func cook(o *Order) {
-	log.Info().Str("order", o.ID).Msg("cooking order")
+func cook(ctx context.Context, o *Order) {
+	log.Info().Ctx(ctx).Str("order", o.ID).Msg("cooking order")
 	time.Sleep(5 * time.Second)
-	log.Info().Str("order", o.ID).Msg("order done!")
+	log.Info().Ctx(ctx).Str("order", o.ID).Msg("order done!")
 }

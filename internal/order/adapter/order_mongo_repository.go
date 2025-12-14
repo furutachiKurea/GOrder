@@ -2,10 +2,11 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
 
 	_ "github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
 	"github.com/rs/zerolog/log"
@@ -29,7 +30,10 @@ func NewOrderRepositoryMongo(db *mongo.Client) *OrderRepositoryMongo {
 }
 
 func (r *OrderRepositoryMongo) Create(ctx context.Context, order *domain.Order) (created *domain.Order, err error) {
-	defer r.logWithTag("create", err, created)
+	_, deferlog := logging.WhenRequest(ctx, "OrderRepositoryMongo.Create", map[string]any{
+		"order": order,
+	})
+	defer deferlog(created, &err)
 
 	write := r.domainToMongo(order)
 	res, err := r.collection().InsertOne(ctx, write)
@@ -43,7 +47,11 @@ func (r *OrderRepositoryMongo) Create(ctx context.Context, order *domain.Order) 
 }
 
 func (r *OrderRepositoryMongo) Get(ctx context.Context, orderID, customerID string) (got *domain.Order, err error) {
-	defer r.logWithTag("get", err, got)
+	_, deferlog := logging.WhenRequest(ctx, "OrderRepositoryMongo.Get", map[string]any{
+		"order_id":    orderID,
+		"customer_id": customerID,
+	})
+	defer deferlog(got, &err)
 
 	read := &orderModel{}
 	mongoID, err := primitive.ObjectIDFromHex(orderID)
@@ -56,12 +64,12 @@ func (r *OrderRepositoryMongo) Get(ctx context.Context, orderID, customerID stri
 		"_id": mongoID,
 	}
 
-	if err = r.collection().FindOne(ctx, cond).Decode(read); err != nil {
-		return
-	}
-
-	if read == nil {
-		return nil, domain.NotFoundError{OrderID: orderID}
+	err = r.collection().FindOne(ctx, cond).Decode(read)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, domain.NotFoundError{OrderID: orderID}
+		}
+		return nil, err
 	}
 
 	return r.unmarshal(read), nil
@@ -69,7 +77,10 @@ func (r *OrderRepositoryMongo) Get(ctx context.Context, orderID, customerID stri
 
 // Update 先查找对应的 Order，然后 apply updateFn，再写入 Mongo
 func (r *OrderRepositoryMongo) Update(ctx context.Context, updates *domain.Order) (err error) {
-	defer r.logWithTag("update", err, nil)
+	_, deferlog := logging.WhenRequest(ctx, "OrderRepositoryMongo.Update", map[string]any{
+		"updates": updates,
+	})
+	defer deferlog(nil, &err)
 
 	if updates == nil {
 		panic("got nil order")
@@ -102,7 +113,7 @@ func (r *OrderRepositoryMongo) Update(ctx context.Context, updates *domain.Order
 	log.Debug().Any("order_update_to", updated).Msg("")
 
 	mongoID, _ := primitive.ObjectIDFromHex(oldOrder.ID)
-	res, err := r.collection().UpdateOne(
+	_, err = r.collection().UpdateOne(
 		ctx,
 		bson.M{"_id": mongoID},
 		bson.M{"$set": bson.M{
@@ -115,7 +126,6 @@ func (r *OrderRepositoryMongo) Update(ctx context.Context, updates *domain.Order
 		return
 	}
 
-	r.logWithTag("finish_update", err, res)
 	return
 }
 
@@ -142,21 +152,6 @@ func (r *OrderRepositoryMongo) unmarshal(m *orderModel) *domain.Order {
 		Status:      m.Status,
 		PaymentLink: m.PaymentLink,
 		Items:       m.Items,
-	}
-}
-
-func (r *OrderRepositoryMongo) logWithTag(tag string, err error, result any) {
-	l := log.With().
-		Str("repository", "order_repository_mongo").
-		Time("performed_at", time.Now()).
-		Err(err).
-		Any("result", result).
-		Logger()
-
-	if err != nil {
-		l.Error().Msgf("%s_failed", tag)
-	} else {
-		l.Info().Msgf("%s_succeeded", tag)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -40,6 +41,9 @@ func NewConfirmStockReservation(
 }
 
 func (h confirmStockReservationHandler) Handle(ctx context.Context, command ConfirmStockReservation) ([]*domain.Item, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "ConfirmStockReservationHandler", command, err)
+
 	if err := lock(ctx, getLockKey(command.Items)); err != nil {
 		return nil, fmt.Errorf("redis lock, key=%s: %w", getLockKey(command.Items), err)
 	}

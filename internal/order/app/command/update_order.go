@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
@@ -39,6 +40,9 @@ func NewUpdateOrderHandler(
 }
 
 func (c updateOrderHandler) Handle(ctx context.Context, cmd UpdateOrder) (any, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "UpdateOrderHandler", cmd, err)
+
 	ctx, span := tracing.Start(ctx, "updateOrderHandler")
 	defer span.End()
 

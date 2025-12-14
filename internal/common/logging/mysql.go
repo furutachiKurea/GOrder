@@ -18,49 +18,59 @@ const (
 	Error    = "err"
 )
 
-func WhenMySQL(_ context.Context, method string, args ...any) (zerolog.Logger, func(resp any, errP *error)) {
-	fields := make(map[string]any)
-	fields[Method] = method
-	fields[Args] = formatMySQLArgs(args)
+type ArgFormatter interface {
+	FormatArg() (string, error)
+}
+
+func WhenMySQL(ctx context.Context, method string, args ...any) (zerolog.Logger, func(resp any, errP *error)) {
+	l := log.With().Str(Method, method).Str(Args, formatArgs(args)).Logger()
 	start := time.Now()
 
-	return log.Logger.With().Fields(fields).Logger(), func(resp any, err *error) {
-		ffields := make(map[string]any)
-		for k, v := range fields {
-			ffields[k] = v
-		}
-		ffields[Cost] = time.Since(start).Milliseconds()
-		ffields[Response] = resp
-
-		event := log.Info()
-		msg := "mysql_success"
+	return l, func(resp any, err *error) {
+		l = l.With().
+			Int(Cost, int(time.Since(start).Milliseconds())).
+			Any(Response, resp).Logger()
 
 		if err != nil && *err != nil {
-			msg = "mysql_error"
-			ffields[Error] = (*err).Error()
-			event = log.Error()
+			l.Error().
+				Ctx(ctx).
+				Str(Error, (*err).Error()).
+				Msg("mysql_error")
 		}
 
-		event.Fields(ffields).Msg(msg)
+		l.Info().Ctx(ctx).Msg("mysql_success")
 	}
 }
 
-func formatMySQLArgs(args []any) string {
+func formatArgs(args []any) string {
 	var items []string
 	for _, arg := range args {
-		items = append(items, formatMySQLArg(arg))
+		items = append(items, formatArg(arg))
 	}
 	return strings.Join(items, "||")
 }
 
-func formatMySQLArg(arg any) string {
-	switch v := arg.(type) {
-	default:
-		bytes, err := json.Marshal(v)
+func formatArg(arg any) string {
+	var (
+		str string
+		err error
+	)
+	defer func() {
 		if err != nil {
-			return "unsupported type in formatMySQLArg, err=" + err.Error()
+			str = "unsupported type in formatArg, err=" + err.Error()
 		}
+	}()
 
-		return string(bytes)
+	switch v := arg.(type) {
+	case ArgFormatter:
+		str, err = v.FormatArg()
+	default:
+		str, err = marshalString(v)
 	}
+	return str
+}
+
+func marshalString(v any) (string, error) {
+	bytes, err := json.Marshal(v)
+	return string(bytes), err
 }

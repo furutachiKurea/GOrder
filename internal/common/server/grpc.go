@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/furutachiKurea/gorder/common/logging"
 	grpctags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	grpclogging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -32,11 +33,12 @@ func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) 
 		// 相当于中间件
 		grpc.ChainUnaryInterceptor(
 			grpctags.UnaryServerInterceptor(grpctags.WithFieldExtractor(grpctags.CodeGenRequestFieldExtractor)),
-			logging.UnaryServerInterceptor(InterceptorLogger(logger)),
+			grpclogging.UnaryServerInterceptor(InterceptorLogger(logger)),
+			logging.GRPCUnaryInterceptor,
 		),
 		grpc.ChainStreamInterceptor(
 			grpctags.StreamServerInterceptor(grpctags.WithFieldExtractor(grpctags.CodeGenRequestFieldExtractor)),
-			logging.StreamServerInterceptor(InterceptorLogger(logger)),
+			grpclogging.StreamServerInterceptor(InterceptorLogger(logger)),
 		), // 拦截流式调用
 	)
 
@@ -55,18 +57,18 @@ func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) 
 
 // InterceptorLogger adapts zerolog logger to interceptor logger.
 // This code is simple enough to be copied and not imported.
-func InterceptorLogger(l zerolog.Logger) logging.Logger {
-	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+func InterceptorLogger(l zerolog.Logger) grpclogging.Logger {
+	return grpclogging.LoggerFunc(func(ctx context.Context, lvl grpclogging.Level, msg string, fields ...any) {
 		l := l.With().Fields(fields).Logger()
 
 		switch lvl {
-		case logging.LevelDebug:
+		case grpclogging.LevelDebug:
 			l.Debug().Msg(msg)
-		case logging.LevelInfo:
+		case grpclogging.LevelInfo:
 			l.Info().Msg(msg)
-		case logging.LevelWarn:
+		case grpclogging.LevelWarn:
 			l.Warn().Msg(msg)
-		case logging.LevelError:
+		case grpclogging.LevelError:
 			l.Error().Msg(msg)
 		default:
 			panic(fmt.Sprintf("unknown level %v", lvl))

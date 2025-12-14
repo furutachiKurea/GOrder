@@ -5,6 +5,7 @@ import (
 
 	"github.com/furutachiKurea/gorder/common/decorator"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/payment/domain"
 
@@ -49,6 +50,9 @@ func NewCreatePaymentHandler(
 
 // Handle 创建支付链接并更新订单状态为等待支付，返回支付链接，如果更新订单是失败会同时返回 error
 func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (string, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "CreatePaymentHandler", cmd, err)
+
 	ctx, span := tracing.Start(ctx, "createPaymentHandle")
 	defer span.End()
 
@@ -57,7 +61,7 @@ func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (st
 		return "", err
 	}
 
-	log.Info().
+	log.Info().Ctx(ctx).
 		Str("payment_link", link).
 		Any("order_id", cmd.Order.Id).
 		Msg("create payment link for order")

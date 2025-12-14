@@ -50,7 +50,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	<-forever
 }
 
-// handleMessage 处理接收到的订单创建消息，并将更新后的订单状态储存到数据库
+// handleMessage 处理接收到的订单支付消息，更新订单状态并更新库存
 func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Queue) {
 	log.Info().
 		Str("msg", string(msg.Body)).
@@ -65,37 +65,31 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	defer func() {
 		if err != nil {
 			_ = msg.Nack(false, false)
+			log.Warn().Ctx(ctx).
+				Err(err).
+				Str("from", q.Name).
+				Str("msg", string(msg.Body)).
+				Msg("consume failed")
 		} else {
 			_ = msg.Ack(false)
+			span.AddEvent("order.paid_confirmed")
+			log.Info().Ctx(ctx).Msg("consume success")
 		}
 	}()
 
 	o := &domain.Order{}
 	if err = json.Unmarshal(msg.Body, o); err != nil {
-		log.Info().
-			Err(err).
-			Msg("failed to unmarshal msg.body to domain.order")
-
+		err = fmt.Errorf("unmarshal msg to body: %w", err)
 		return
 	}
 
 	log.Debug().Any("unmarshalled_order", o).Msg("unmarshalled order from message")
 	_, err = c.app.Commands.ConfirmOrderPaid.Handle(ctx, command.ConfirmOrderPaid{Order: o})
 	if err != nil {
-		log.Info().
-			Err(err).
-			Msgf("error updating order, orderID = %s", o.ID)
-
+		err = fmt.Errorf("confirm order paid: %w", err)
 		if err = broker.HandlerRetry(ctx, ch, &msg); err != nil {
-			log.Warn().Err(err).
-				Str("message_id", msg.MessageId).
-				Msg("retry_error, error handling retry")
-			return
+			err = fmt.Errorf("handle retry, messageId=%s: %w", msg.MessageId, err)
 		}
-
 		return
 	}
-
-	span.AddEvent("order.updated")
-	log.Info().Msg("order consume success paid event success")
 }

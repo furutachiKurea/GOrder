@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/order/app/client"
 	"github.com/furutachiKurea/gorder/order/convertor"
@@ -45,6 +46,9 @@ func NewConfirmOrderPaidHandler(
 }
 
 func (c confirmOrderPaidHandler) Handle(ctx context.Context, cmd ConfirmOrderPaid) (any, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "ConfirmOrderPaidHandler", cmd, err)
+
 	ctx, span := tracing.Start(ctx, "confirmOrderPaidHandler")
 	defer span.End()
 	if err := cmd.Order.IsPaid(); err != nil {
@@ -62,7 +66,7 @@ func (c confirmOrderPaidHandler) Handle(ctx context.Context, cmd ConfirmOrderPai
 		})
 	}
 
-	_, err := c.stockGRPC.ConfirmStockReservation(
+	_, err = c.stockGRPC.ConfirmStockReservation(
 		ctx,
 		convertor.NewItemWithQuantityConvertor().DomainsToProtos(itemWithQuantities),
 	)

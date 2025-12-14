@@ -5,19 +5,20 @@ import (
 	"errors"
 	"time"
 
+	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func SetNX(ctx context.Context, client *redis.Client, key, value string, ttl time.Duration) (err error) {
 	now := time.Now()
 	defer func() {
-		l := zerolog.Ctx(ctx).With().
+		l := log.Logger.With().Ctx(ctx).
 			Time("start", now).
 			Str("key", key).
 			Str("value", value).
 			Err(err).
-			Int64("cost(ns)", time.Since(now).Nanoseconds()).Logger()
+			Int64(logging.Cost, time.Since(now).Nanoseconds()).Logger()
 
 		if err == nil {
 			l.Info().Msg("redis_setnx_success")
@@ -37,11 +38,11 @@ func SetNX(ctx context.Context, client *redis.Client, key, value string, ttl tim
 func Del(ctx context.Context, client *redis.Client, key string) (err error) {
 	now := time.Now()
 	defer func() {
-		l := zerolog.Ctx(ctx).With().
+		l := log.Logger.With().Ctx(ctx).
 			Time("start", now).
 			Str("key", key).
 			Err(err).
-			Int64("cost(ns)", time.Since(now).Nanoseconds()).
+			Int64(logging.Cost, time.Since(now).Nanoseconds()).
 			Logger()
 		if err == nil {
 			l.Info().Msg("redis_del_success")

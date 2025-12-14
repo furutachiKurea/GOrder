@@ -34,11 +34,20 @@ func (h PaymentHandler) RegisterRoutes(router *gin.Engine) {
 
 // handleWebhook handles Stripe webhook events，并将支付成功的订单信息发布到消息队列
 func (h PaymentHandler) handleWebhook(c *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.Error().Ctx(c.Request.Context()).Err(err).Msg("handlerWebhook error")
+		} else {
+			log.Info().Ctx(c.Request.Context()).Msg("handlerWebhook success")
+		}
+	}()
+
 	const MaxBodyBytes = int64(65536)
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxBodyBytes)
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		log.Error().Err(err).Msg("error reading request body")
+		err = fmt.Errorf("reading request body: %w", err)
 		c.JSON(http.StatusServiceUnavailable, err.Error())
 		return
 	}
@@ -46,13 +55,13 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 	event, err := webhook.ConstructEvent(payload, c.Request.Header.Get("Stripe-Signature"),
 		viper.GetString("endpoint-stripe-secret"))
 	if err != nil {
-		log.Error().Err(err).Msg("Error verifying webhook signature")
+		err = fmt.Errorf("verifying webhook signature: %w", err)
 		c.JSON(http.StatusBadRequest, err.Error()) // Return a 400 error on a bad signature
 		return
 	}
 
 	if err = json.Unmarshal(payload, &event); err != nil {
-		log.Error().Err(err).Msg("Failed to parse webhook body json")
+		err = fmt.Errorf("unmarshalling webhook body json: %w", err)
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
@@ -62,14 +71,12 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 	case stripe.EventTypeCheckoutSessionCompleted:
 		var session stripe.CheckoutSession
 		if err = json.Unmarshal(event.Data.Raw, &session); err != nil {
-			log.Error().Err(err).Msg("error unmarshal event.Data.Raw into session")
+			err = fmt.Errorf("unmarshalling event.Data.Raw into session: %w", err)
 			c.JSON(http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if session.PaymentStatus == stripe.CheckoutSessionPaymentStatusPaid {
-			log.Info().Str("session", session.ID).Msg("payment check out for session success")
-
 			ctx, cancel := context.WithCancel(c)
 			defer cancel()
 
@@ -83,7 +90,7 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 				Items:      items,
 			})
 			if err != nil {
-				log.Error().Err(err).Msg("error marshal domain.order")
+				err = fmt.Errorf("marshalling domain.order: %w", err)
 				c.JSON(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -100,12 +107,12 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 					Body:         marshalledOrder,
 					Headers:      headers,
 				})
-			log.Info().
+			log.Info().Ctx(mqCtx).
 				Str("message_body", string(marshalledOrder)).
 				Msgf("message published to %s", broker.EventOrderPaid)
 		}
 	default:
-		log.Warn().Str("event type", string(event.Type)).Msg("Unhandled event type")
+		log.Warn().Ctx(c.Request.Context()).Str("event type", string(event.Type)).Msg("Unhandled event type")
 	}
 
 	c.JSON(http.StatusOK, nil)
