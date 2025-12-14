@@ -4,10 +4,11 @@ import (
 	"context"
 	"sync"
 
+	"github.com/furutachiKurea/gorder/common/entity"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 )
 
-var stub = map[string]*domain.Item{
+var stub = map[string]*entity.Item{
 	"item_id": {
 		Id:       "foo_item",
 		Name:     "stub_item",
@@ -37,11 +38,11 @@ var stub = map[string]*domain.Item{
 // Deprecated: use StockRepositoryMySQL instead.
 type MemoryStockRepository struct {
 	lock  *sync.RWMutex
-	store map[string]*domain.Item
+	store map[string]*entity.Item
 }
 
 // Deprecated: use StockRepositoryMySQL.ReserveStock.
-func (m MemoryStockRepository) ReserveStock(ctx context.Context, items []*domain.ItemWithQuantity) error {
+func (m MemoryStockRepository) ReserveStock(ctx context.Context, items []*entity.ItemWithQuantity) error {
 	// TODO implement me
 	panic("implement me")
 }
@@ -55,12 +56,12 @@ func NewMemoryStockRepository() *MemoryStockRepository {
 }
 
 // Deprecated: use StockRepositoryMySQL.GetItems.
-func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*domain.Item, error) {
+func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*entity.Item, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	var (
-		res        []*domain.Item
+		res        []*entity.Item
 		missingIDs []string
 	)
 
@@ -80,7 +81,7 @@ func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*d
 }
 
 // Deprecated: use StockRepositoryMySQL.GetStock.
-func (m MemoryStockRepository) GetStock(ctx context.Context, ids []string) ([]*domain.ItemWithQuantity, error) {
+func (m MemoryStockRepository) GetStock(ctx context.Context, ids []string) ([]*entity.ItemWithQuantity, error) {
 	// TODO implement me
 	panic("implement me")
 }

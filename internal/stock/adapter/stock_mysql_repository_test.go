@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	_ "github.com/furutachiKurea/gorder/common/config"
-	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/stock/infrastructure/persistent"
 
 	"github.com/spf13/viper"
@@ -72,7 +72,7 @@ func TestStockRepositoryMySQL_ReserveStock_Race(t *testing.T) {
 
 	for range concurrentGoroutines {
 		g.Go(func() error {
-			err := repo.ReserveStock(ctx, []*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}})
+			err := repo.ReserveStock(ctx, []*entity.ItemWithQuantity{{Id: testItem, Quantity: 1}})
 			return err
 		})
 	}
@@ -112,7 +112,7 @@ func TestStockRepositoryMySQL_ReserveStock_OverSell(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = repo.ReserveStock(ctx, []*domain.ItemWithQuantity{{Id: testItem, Quantity: 1}})
+			_ = repo.ReserveStock(ctx, []*entity.ItemWithQuantity{{Id: testItem, Quantity: 1}})
 		}()
 	}
 	wg.Wait()
@@ -127,7 +127,7 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 	tests := []struct {
 		name             string
 		stock            []*persistent.StockModel
-		toUpdate         []*domain.ItemWithQuantity
+		toUpdate         []*entity.ItemWithQuantity
 		expectedReserved map[string]int64
 		wantErr          bool
 	}{
@@ -145,7 +145,7 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 					Reserved:  0,
 				},
 			},
-			toUpdate: []*domain.ItemWithQuantity{
+			toUpdate: []*entity.ItemWithQuantity{
 				{Id: "item-2", Quantity: 2},
 				{Id: "item-1", Quantity: 2},
 			},
@@ -169,7 +169,7 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 					Reserved:  0,
 				},
 			},
-			toUpdate: []*domain.ItemWithQuantity{
+			toUpdate: []*entity.ItemWithQuantity{
 				{Id: "item-2", Quantity: 1000},
 				{Id: "item-1", Quantity: 200000},
 			},
@@ -193,7 +193,7 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 					Reserved:  0,
 				},
 			},
-			toUpdate: []*domain.ItemWithQuantity{
+			toUpdate: []*entity.ItemWithQuantity{
 				{Id: "item-2", Quantity: 1000},
 				{Id: "item-1", Quantity: 1},
 			},
@@ -212,7 +212,7 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 					Reserved:  0,
 				},
 			},
-			toUpdate: []*domain.ItemWithQuantity{
+			toUpdate: []*entity.ItemWithQuantity{
 				{Id: "item-3", Quantity: 1000},
 				{Id: "item-1", Quantity: 1},
 			},
@@ -268,7 +268,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 	tests := []struct {
 		name             string
 		initialStock     []*persistent.StockModel
-		toConfirm        []*domain.ItemWithQuantity
+		toConfirm        []*entity.ItemWithQuantity
 		expectedQuantity map[string]int64
 		expectedReserved map[string]int64
 		wantErr          bool
@@ -279,7 +279,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 				{ProductID: "item-1", Quantity: 100, Reserved: 10},
 				{ProductID: "item-2", Quantity: 50, Reserved: 5},
 			},
-			toConfirm: []*domain.ItemWithQuantity{
+			toConfirm: []*entity.ItemWithQuantity{
 				{Id: "item-1", Quantity: 5},
 				{Id: "item-2", Quantity: 3},
 			},
@@ -298,7 +298,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 			initialStock: []*persistent.StockModel{
 				{ProductID: "item-1", Quantity: 100, Reserved: 3},
 			},
-			toConfirm: []*domain.ItemWithQuantity{
+			toConfirm: []*entity.ItemWithQuantity{
 				{Id: "item-1", Quantity: 5}, // 超卖了
 			},
 			expectedQuantity: map[string]int64{
@@ -314,7 +314,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 			initialStock: []*persistent.StockModel{
 				{ProductID: "item-1", Quantity: 100, Reserved: 10},
 			},
-			toConfirm: []*domain.ItemWithQuantity{
+			toConfirm: []*entity.ItemWithQuantity{
 				{Id: "item-2", Quantity: 5},
 			},
 			expectedQuantity: map[string]int64{
@@ -332,7 +332,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 				{ProductID: "item-2", Quantity: 50, Reserved: 0},
 				{ProductID: "item-3", Quantity: 30, Reserved: 5},
 			},
-			toConfirm: []*domain.ItemWithQuantity{
+			toConfirm: []*entity.ItemWithQuantity{
 				{Id: "item-1", Quantity: 10},
 				{Id: "item-2", Quantity: 5},
 				{Id: "item-3", Quantity: 2},

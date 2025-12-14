@@ -3,13 +3,12 @@ package ports
 import (
 	"context"
 
+	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/order/app"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/query"
-	"github.com/furutachiKurea/gorder/order/convertor"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
-
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,7 +26,7 @@ func NewGRPCServer(app app.Application) *GRPCServer {
 func (G GRPCServer) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*emptypb.Empty, error) {
 	_, err := G.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
 		CustomerID: request.CustomerId,
-		Items:      convertor.NewItemWithQuantityConvertor().ProtosToDomains(request.Items),
+		Items:      convertor.NewItemWithQuantityConvertor().ProtosToEntities(request.Items),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -46,7 +45,13 @@ func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderReque
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	}
 
-	return convertor.NewOrderConvertor().DomainToProto(order), nil
+	return &orderpb.Order{
+		Id:          order.ID,
+		CustomerId:  order.CustomerID,
+		Status:      order.Status,
+		PaymentLink: order.PaymentLink,
+		Items:       convertor.NewItemConvertor().EntitiesToProtos(order.Items),
+	}, nil
 }
 
 func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (*emptypb.Empty, error) {
@@ -56,7 +61,7 @@ func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (*e
 		request.CustomerId,
 		request.Status,
 		request.PaymentLink,
-		convertor.NewItemConvertor().ProtosToDomains(request.Items))
+		convertor.NewItemConvertor().ProtosToEntities(request.Items))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -9,10 +9,8 @@ import (
 	"net/http"
 
 	"github.com/furutachiKurea/gorder/common/broker"
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/tracing"
-	"github.com/furutachiKurea/gorder/payment/domain"
-
 	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
@@ -81,7 +79,7 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 			ctx, cancel := context.WithCancel(c.Request.Context())
 			defer cancel()
 
-			var items []*orderpb.Item
+			var items []*entity.Item
 			_ = json.Unmarshal([]byte(session.Metadata["items"]), &items)
 
 			mqCtx, span := tracing.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
@@ -92,7 +90,7 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 				Routing:  broker.FanOut,
 				Queue:    "",
 				Exchange: broker.EventOrderPaid,
-				Body: &domain.Order{
+				Body: &entity.Order{
 					ID:         session.Metadata["order_id"],
 					CustomerID: session.Metadata["customer_id"],
 					Status:     string(session.PaymentStatus),

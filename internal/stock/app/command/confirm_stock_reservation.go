@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
 	"github.com/rs/zerolog"
@@ -12,11 +13,11 @@ import (
 )
 
 type ConfirmStockReservation struct {
-	Items []*domain.ItemWithQuantity
+	Items []*entity.ItemWithQuantity
 }
 
 // ConfirmStockReservationHandler 为支付成功的订单更新库存状态，扣减库存并扣除预留库存
-type ConfirmStockReservationHandler decorator.CommandHandler[ConfirmStockReservation, []*domain.Item]
+type ConfirmStockReservationHandler decorator.CommandHandler[ConfirmStockReservation, []*entity.Item]
 
 type confirmStockReservationHandler struct {
 	stockRepo domain.Repository
@@ -31,7 +32,7 @@ func NewConfirmStockReservation(
 		panic("stockRepo is nil")
 	}
 
-	return decorator.ApplyCommandDecorators[ConfirmStockReservation, []*domain.Item](
+	return decorator.ApplyCommandDecorators[ConfirmStockReservation, []*entity.Item](
 		confirmStockReservationHandler{
 			stockRepo: stockRepo,
 		},
@@ -40,7 +41,7 @@ func NewConfirmStockReservation(
 	)
 }
 
-func (h confirmStockReservationHandler) Handle(ctx context.Context, command ConfirmStockReservation) ([]*domain.Item, error) {
+func (h confirmStockReservationHandler) Handle(ctx context.Context, command ConfirmStockReservation) ([]*entity.Item, error) {
 	var err error
 	defer logging.WhenCommandExecute(ctx, "ConfirmStockReservationHandler", command, err)
 

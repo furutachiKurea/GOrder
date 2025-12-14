@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/stripe/stripe-go/v84"
 )
 
@@ -12,10 +13,30 @@ type Order struct {
 	CustomerID  string
 	Status      string
 	PaymentLink string
-	Items       []*Item
+	Items       []*entity.Item
 }
 
-func NewOrder(id, customerID, status, paymentLink string, items []*Item) (*Order, error) {
+func (o *Order) ToProto() *entity.Order {
+	items := make([]*entity.Item, len(o.Items))
+	for i, item := range o.Items {
+		items[i] = &entity.Item{
+			Id:       item.Id,
+			Name:     item.Name,
+			Quantity: item.Quantity,
+			PriceID:  item.PriceID,
+		}
+	}
+
+	return &entity.Order{
+		ID:          o.ID,
+		CustomerID:  o.CustomerID,
+		Status:      o.Status,
+		PaymentLink: o.PaymentLink,
+		Items:       items,
+	}
+}
+
+func NewOrder(id, customerID, status, paymentLink string, items []*entity.Item) (*Order, error) {
 	if id == "" {
 		return nil, errors.New("empty id")
 	}
@@ -43,7 +64,7 @@ func NewOrder(id, customerID, status, paymentLink string, items []*Item) (*Order
 
 // NewPendingOrder 创建一个待支付的订单，作为 payment 对新建订单进行消费前的状态,
 // 刚创建的订单状态为 "pending"
-func NewPendingOrder(customerID string, items []*Item) (*Order, error) {
+func NewPendingOrder(customerID string, items []*entity.Item) (*Order, error) {
 	if customerID == "" {
 		return nil, errors.New("empty customerID")
 	}
@@ -94,16 +115,4 @@ func (o *Order) IsPaid() error {
 	}
 
 	return fmt.Errorf("order status not paid, order_id=%s, status=%s", o.ID, o.Status)
-}
-
-type Item struct {
-	Id       string
-	Name     string
-	Quantity int64
-	PriceID  string
-}
-
-type ItemWithQuantity struct {
-	Id       string
-	Quantity int64
 }

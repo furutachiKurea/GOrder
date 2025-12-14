@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	_ "github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
@@ -181,5 +182,5 @@ type orderModel struct {
 	CustomerID  string             `bson:"customer_id"`
 	Status      string             `bson:"status"`
 	PaymentLink string             `bson:"payment_link"`
-	Items       []*domain.Item     `bson:"items"`
+	Items       []*entity.Item     `bson:"items"`
 }

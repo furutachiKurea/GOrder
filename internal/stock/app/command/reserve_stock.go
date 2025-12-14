@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/handler/redis"
 	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
@@ -20,10 +21,10 @@ const (
 )
 
 type ReserveStock struct {
-	Items []*domain.ItemWithQuantity
+	Items []*entity.ItemWithQuantity
 }
 
-type ReserveStockHandler decorator.CommandHandler[ReserveStock, []*domain.Item]
+type ReserveStockHandler decorator.CommandHandler[ReserveStock, []*entity.Item]
 
 type reserveStockHandler struct {
 	stockRepo     domain.Repository
@@ -43,7 +44,7 @@ func NewReserveStockHandler(
 		panic("priceProvider is nil")
 	}
 
-	return decorator.ApplyCommandDecorators[ReserveStock, []*domain.Item](
+	return decorator.ApplyCommandDecorators[ReserveStock, []*entity.Item](
 		reserveStockHandler{
 			stockRepo:     stockRepo,
 			priceProvider: priceProvider,
@@ -53,7 +54,7 @@ func NewReserveStockHandler(
 	)
 }
 
-func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) ([]*domain.Item, error) {
+func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) ([]*entity.Item, error) {
 	var err error
 	defer logging.WhenCommandExecute(ctx, "ReserveStockHandler", command, err)
 
@@ -67,14 +68,14 @@ func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) (
 	}()
 
 	// 从 stripe 获取 priceID
-	var res []*domain.Item
+	var res []*entity.Item
 	for _, item := range command.Items {
 		priceID, err := h.priceProvider.GetPriceByProductID(ctx, item.Id)
 		if err != nil || priceID == "" {
 			return nil, err
 		}
 
-		res = append(res, &domain.Item{
+		res = append(res, &entity.Item{
 			Id:       item.Id,
 			Quantity: item.Quantity,
 			PriceID:  priceID,
@@ -98,7 +99,7 @@ func unlock(ctx context.Context, key string) error {
 	return redis.Del(ctx, redis.LocalClient(), key)
 }
 
-func getLockKey(items []*domain.ItemWithQuantity) string {
+func getLockKey(items []*entity.ItemWithQuantity) string {
 	var ids []string
 	for _, item := range items {
 		ids = append(ids, item.Id)
@@ -108,15 +109,15 @@ func getLockKey(items []*domain.ItemWithQuantity) string {
 }
 
 // packItems 合并相同商品的数量
-func packItems(items []*domain.ItemWithQuantity) []*domain.ItemWithQuantity {
+func packItems(items []*entity.ItemWithQuantity) []*entity.ItemWithQuantity {
 	merged := make(map[string]int64)
 	for _, item := range items {
 		merged[item.Id] += item.Quantity
 	}
 
-	var packed []*domain.ItemWithQuantity
+	var packed []*entity.ItemWithQuantity
 	for id, quantity := range merged {
-		packed = append(packed, &domain.ItemWithQuantity{
+		packed = append(packed, &entity.ItemWithQuantity{
 			Id:       id,
 			Quantity: quantity,
 		})

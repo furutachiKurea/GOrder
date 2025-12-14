@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/furutachiKurea/gorder/order/app/client"
-	"github.com/furutachiKurea/gorder/order/convertor"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
+
 	"github.com/rs/zerolog"
 )
 
@@ -58,9 +60,9 @@ func (c confirmOrderPaidHandler) Handle(ctx context.Context, cmd ConfirmOrderPai
 		return nil, err
 	}
 
-	var itemWithQuantities []*domain.ItemWithQuantity
+	var itemWithQuantities []*entity.ItemWithQuantity
 	for _, orderItem := range cmd.Order.Items {
-		itemWithQuantities = append(itemWithQuantities, &domain.ItemWithQuantity{
+		itemWithQuantities = append(itemWithQuantities, &entity.ItemWithQuantity{
 			Id:       orderItem.Id,
 			Quantity: orderItem.Quantity,
 		})
@@ -68,7 +70,7 @@ func (c confirmOrderPaidHandler) Handle(ctx context.Context, cmd ConfirmOrderPai
 
 	_, err = c.stockGRPC.ConfirmStockReservation(
 		ctx,
-		convertor.NewItemWithQuantityConvertor().DomainsToProtos(itemWithQuantities),
+		convertor.NewItemWithQuantityConvertor().EntitiesToProtos(itemWithQuantities),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("confirm stock reservation: %w", err)

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/furutachiKurea/gorder/common/broker"
+	"github.com/furutachiKurea/gorder/common/convertor"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,14 +23,6 @@ type OrderService interface {
 
 type Consumer struct {
 	orderGRPC OrderService
-}
-
-type Order struct {
-	ID          string
-	CustomerID  string
-	Status      string
-	PaymentLink string
-	Items       []*orderpb.Item
 }
 
 func NewConsumer(orderService OrderService) *Consumer {
@@ -82,7 +76,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		}
 	}()
 
-	o := &Order{}
+	o := &entity.Order{}
 	if err = json.Unmarshal(msg.Body, o); err != nil {
 		log.Info().
 			Err(err).
@@ -102,7 +96,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		CustomerId:  o.CustomerID,
 		Status:      "ready",
 		PaymentLink: o.PaymentLink,
-		Items:       o.Items,
+		Items:       convertor.NewItemConvertor().EntitiesToProtos(o.Items),
 	}); err != nil {
 		if err = broker.HandlerRetry(ctx, ch, &msg); err != nil {
 			log.Warn().Err(err).Msg("kitchen: error handling retry")
@@ -113,7 +107,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	log.Info().Msg("kitchen.order.finished.updated")
 }
 
-func cook(ctx context.Context, o *Order) {
+func cook(ctx context.Context, o *entity.Order) {
 	log.Info().Ctx(ctx).Str("order", o.ID).Msg("cooking order")
 	time.Sleep(5 * time.Second)
 	log.Info().Ctx(ctx).Str("order", o.ID).Msg("order done!")

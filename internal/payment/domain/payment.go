@@ -3,16 +3,16 @@ package domain
 import (
 	"context"
 
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/entity"
 )
 
 type Processor interface {
-	CreatePaymentLink(ctx context.Context, order *orderpb.Order) (string, error)
+	CreatePaymentLink(ctx context.Context, order *entity.Order) (string, error)
 }
 type Order struct {
 	ID          string
 	CustomerID  string
 	Status      string
 	PaymentLink string
-	Items       []*orderpb.Item
+	Items       []*entity.Item
 }

@@ -6,12 +6,12 @@ import (
 	"github.com/furutachiKurea/gorder/common"
 	oapi "github.com/furutachiKurea/gorder/common/client/order"
 	"github.com/furutachiKurea/gorder/common/consts"
+	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/handler/errors"
 	"github.com/furutachiKurea/gorder/order/app"
 	"github.com/furutachiKurea/gorder/order/app/command"
 	"github.com/furutachiKurea/gorder/order/app/dto"
 	"github.com/furutachiKurea/gorder/order/app/query"
-	"github.com/furutachiKurea/gorder/order/convertor"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,7 +42,7 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 	}
 	result, err := H.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrder{
 		CustomerID: customerID,
-		Items:      convertor.NewItemWithQuantityConvertor().OAPIsToDomains(req.Items),
+		Items:      convertor.NewItemWithQuantityConvertor().OAPIsToEntities(req.Items),
 	})
 	if err != nil {
 		err = errors.NewWithError(consts.ErrnoInternalError, err)
@@ -76,7 +76,13 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 	}
 
 	resp = dto.GetCustomerOrderResp{
-		Order: convertor.NewOrderConvertor().DomainToOAPI(order),
+		Order: &oapi.Order{
+			CustomerId:  order.CustomerID,
+			Id:          order.ID,
+			Items:       convertor.NewItemConvertor().EntitiesToOAPIs(order.Items),
+			PaymentLink: order.PaymentLink,
+			Status:      order.Status,
+		},
 	}
 }
 

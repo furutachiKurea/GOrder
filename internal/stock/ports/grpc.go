@@ -3,11 +3,11 @@ package ports
 import (
 	"context"
 
+	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/genproto/stockpb"
 	"github.com/furutachiKurea/gorder/stock/app"
 	"github.com/furutachiKurea/gorder/stock/app/command"
 	"github.com/furutachiKurea/gorder/stock/app/query"
-	"github.com/furutachiKurea/gorder/stock/convertor"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,7 +28,7 @@ func (G GRPCServer) GetItems(ctx context.Context, request *stockpb.GetItemsReque
 	}
 
 	return &stockpb.GetItemsResponse{
-		Items: convertor.NewItemConvertor().DomainsToProtos(items),
+		Items: convertor.NewItemConvertor().EntitiesToProtos(items),
 	}, nil
 }
 
@@ -36,7 +36,7 @@ func (G GRPCServer) ReserveStock(ctx context.Context, request *stockpb.ReserveSt
 	items, err := G.app.Commands.ReserveStock.Handle(
 		ctx,
 		command.ReserveStock{
-			Items: convertor.NewItemWithQuantityConvertor().ProtosToDomains(request.Items),
+			Items: convertor.NewItemWithQuantityConvertor().ProtosToEntities(request.Items),
 		},
 	)
 	if err != nil {
@@ -44,13 +44,13 @@ func (G GRPCServer) ReserveStock(ctx context.Context, request *stockpb.ReserveSt
 	}
 
 	return &stockpb.ReserveStockResponse{
-		Items: convertor.NewItemConvertor().DomainsToProtos(items),
+		Items: convertor.NewItemConvertor().EntitiesToProtos(items),
 	}, nil
 }
 
 func (G GRPCServer) ConfirmStockReservation(ctx context.Context, request *stockpb.ConfirmStockReservationRequest) (*stockpb.ConfirmStockReservationResponse, error) {
 	_, err := G.app.Commands.ConfirmStockReservation.Handle(ctx, command.ConfirmStockReservation{
-		Items: convertor.NewItemWithQuantityConvertor().ProtosToDomains(request.Items),
+		Items: convertor.NewItemWithQuantityConvertor().ProtosToEntities(request.Items),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

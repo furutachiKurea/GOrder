@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/furutachiKurea/gorder/common/entity"
 )
 
 type Repository interface {
-	GetItems(ctx context.Context, ids []string) ([]*Item, error)
-	GetStock(ctx context.Context, ids []string) ([]*ItemWithQuantity, error)
+	GetItems(ctx context.Context, ids []string) ([]*entity.Item, error)
+	GetStock(ctx context.Context, ids []string) ([]*entity.ItemWithQuantity, error)
 	// ReserveStock 预扣库存
-	ReserveStock(ctx context.Context, items []*ItemWithQuantity) error
+	ReserveStock(ctx context.Context, items []*entity.ItemWithQuantity) error
 	// ConfirmStockReservation 订单支付成功后，更新实际库存和预扣库存
-	ConfirmStockReservation(ctx context.Context, items []*ItemWithQuantity) error
+	ConfirmStockReservation(ctx context.Context, items []*entity.ItemWithQuantity) error
 }
 
 type NotFoundError struct {

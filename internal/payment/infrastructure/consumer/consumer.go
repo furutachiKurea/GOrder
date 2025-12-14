@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/broker"
-	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/payment/app"
 	"github.com/furutachiKurea/gorder/payment/app/command"
 	"go.opentelemetry.io/otel"
@@ -73,7 +73,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		}
 	}()
 
-	o := &orderpb.Order{}
+	o := &entity.Order{}
 	if err = json.Unmarshal(msg.Body, o); err != nil {
 		err = fmt.Errorf("unmarshal msg to body: %w", err)
 		return

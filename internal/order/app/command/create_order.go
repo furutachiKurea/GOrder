@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"github.com/furutachiKurea/gorder/common/broker"
+	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/order/app/client"
-	"github.com/furutachiKurea/gorder/order/convertor"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,7 +22,7 @@ import (
 
 type CreateOrder struct {
 	CustomerID string
-	Items      []*domain.ItemWithQuantity
+	Items      []*entity.ItemWithQuantity
 }
 
 type CreateOrderResult struct {
@@ -97,7 +98,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		Routing:  broker.Direct,
 		Queue:    broker.EventOrderCreated,
 		Exchange: "",
-		Body:     convertor.NewOrderConvertor().DomainToProto(order),
+		Body:     order,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("publish event error q.Name=%s, err:%w", broker.EventOrderPaid, err)
@@ -110,7 +111,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 }
 
 // validate 校验订单是否合法，合并商品数量，库存充足并正确预扣库存后返回订单 Item
-func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWithQuantity) ([]*domain.Item, error) {
+func (c createOrderHandler) validate(ctx context.Context, items []*entity.ItemWithQuantity) ([]*entity.Item, error) {
 	if len(items) == 0 {
 		return nil, errors.New("must have at least one item")
 	}
@@ -118,7 +119,7 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 	items = packItems(items)
 
 	log.Debug().Any("items", items).Msg("packed items")
-	resp, err := c.stockGRPC.ReserveStock(ctx, convertor.NewItemWithQuantityConvertor().DomainsToProtos(items))
+	resp, err := c.stockGRPC.ReserveStock(ctx, convertor.NewItemWithQuantityConvertor().EntitiesToProtos(items))
 	if err != nil {
 		return nil, fmt.Errorf("reserve stock:%w", status.Convert(err).Err())
 	}
@@ -126,19 +127,19 @@ func (c createOrderHandler) validate(ctx context.Context, items []*domain.ItemWi
 	if len(resp.Items) == 0 {
 		return nil, errors.New("no valid items in order")
 	}
-	return convertor.NewItemConvertor().ProtosToDomains(resp.Items), nil
+	return convertor.NewItemConvertor().ProtosToEntities(resp.Items), nil
 }
 
 // packItems 合并相同商品的数量
-func packItems(items []*domain.ItemWithQuantity) []*domain.ItemWithQuantity {
+func packItems(items []*entity.ItemWithQuantity) []*entity.ItemWithQuantity {
 	merged := make(map[string]int64)
 	for _, item := range items {
 		merged[item.Id] += item.Quantity
 	}
 
-	var packed []*domain.ItemWithQuantity
+	var packed []*entity.ItemWithQuantity
 	for id, quantity := range merged {
-		packed = append(packed, &domain.ItemWithQuantity{
+		packed = append(packed, &entity.ItemWithQuantity{
 			Id:       id,
 			Quantity: quantity,
 		})

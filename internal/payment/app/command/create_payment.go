@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
+	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/decorator"
+	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/common/logging"
 	"github.com/furutachiKurea/gorder/common/tracing"
@@ -14,7 +16,7 @@ import (
 )
 
 type CreatePayment struct {
-	Order *orderpb.Order
+	Order *entity.Order
 }
 
 type CreatePaymentHandler decorator.CommandHandler[CreatePayment, string]
@@ -63,14 +65,14 @@ func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (st
 
 	log.Info().Ctx(ctx).
 		Str("payment_link", link).
-		Any("order_id", cmd.Order.Id).
+		Any("order_id", cmd.Order.ID).
 		Msg("create payment link for order")
 
 	newOrder := &orderpb.Order{
-		Id:          cmd.Order.Id,
-		CustomerId:  cmd.Order.CustomerId,
+		Id:          cmd.Order.ID,
+		CustomerId:  cmd.Order.CustomerID,
 		Status:      "waiting_for_payment",
-		Items:       cmd.Order.Items,
+		Items:       convertor.NewItemConvertor().EntitiesToProtos(cmd.Order.Items),
 		PaymentLink: link,
 	}
 
