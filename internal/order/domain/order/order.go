@@ -20,7 +20,7 @@ func (o *Order) ToProto() *entity.Order {
 	items := make([]*entity.Item, len(o.Items))
 	for i, item := range o.Items {
 		items[i] = &entity.Item{
-			Id:       item.Id,
+			ID:       item.ID,
 			Name:     item.Name,
 			Quantity: item.Quantity,
 			PriceID:  item.PriceID,

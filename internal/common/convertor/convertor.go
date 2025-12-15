@@ -59,7 +59,7 @@ type ItemConvertor struct{}
 
 func (c *ItemConvertor) EntityToProto(e *entity.Item) *orderpb.Item {
 	return &orderpb.Item{
-		Id:       e.Id,
+		Id:       e.ID,
 		Name:     e.Name,
 		Quantity: e.Quantity,
 		PriceId:  e.PriceID,
@@ -68,7 +68,7 @@ func (c *ItemConvertor) EntityToProto(e *entity.Item) *orderpb.Item {
 
 func (c *ItemConvertor) ProtoToEntity(pb *orderpb.Item) *entity.Item {
 	return &entity.Item{
-		Id:       pb.Id,
+		ID:       pb.Id,
 		Name:     pb.Name,
 		Quantity: pb.Quantity,
 		PriceID:  pb.PriceId,
@@ -77,7 +77,7 @@ func (c *ItemConvertor) ProtoToEntity(pb *orderpb.Item) *entity.Item {
 
 func (c *ItemConvertor) EntityToOAPI(e *entity.Item) oapi.Item {
 	return oapi.Item{
-		Id:       e.Id,
+		Id:       e.ID,
 		Name:     e.Name,
 		Quantity: e.Quantity,
 		PriceId:  e.PriceID,
@@ -86,7 +86,7 @@ func (c *ItemConvertor) EntityToOAPI(e *entity.Item) oapi.Item {
 
 func (c *ItemConvertor) OAPIToEntity(api oapi.Item) *entity.Item {
 	return &entity.Item{
-		Id:       api.Id,
+		ID:       api.Id,
 		Name:     api.Name,
 		Quantity: api.Quantity,
 		PriceID:  api.PriceId,
@@ -129,14 +129,14 @@ type ItemWithQuantityConvertor struct{}
 
 func (c *ItemWithQuantityConvertor) EntityToProto(e *entity.ItemWithQuantity) *orderpb.ItemWithQuantity {
 	return &orderpb.ItemWithQuantity{
-		Id:       e.Id,
+		Id:       e.ID,
 		Quantity: e.Quantity,
 	}
 }
 
 func (c *ItemWithQuantityConvertor) ProtoToEntity(pb *orderpb.ItemWithQuantity) *entity.ItemWithQuantity {
 	return &entity.ItemWithQuantity{
-		Id:       pb.Id,
+		ID:       pb.Id,
 		Quantity: pb.Quantity,
 	}
 }
@@ -159,14 +159,14 @@ func (c *ItemWithQuantityConvertor) ProtosToEntities(items []*orderpb.ItemWithQu
 
 func (c *ItemWithQuantityConvertor) EntityToOAPI(e *entity.ItemWithQuantity) oapi.ItemWithQuantity {
 	return oapi.ItemWithQuantity{
-		Id:       e.Id,
+		Id:       e.ID,
 		Quantity: e.Quantity,
 	}
 }
 
 func (c *ItemWithQuantityConvertor) OAPIToEntity(api oapi.ItemWithQuantity) *entity.ItemWithQuantity {
 	return &entity.ItemWithQuantity{
-		Id:       api.Id,
+		ID:       api.Id,
 		Quantity: api.Quantity,
 	}
 }

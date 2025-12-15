@@ -72,7 +72,7 @@ func TestStockRepositoryMySQL_ReserveStock_Race(t *testing.T) {
 
 	for range concurrentGoroutines {
 		g.Go(func() error {
-			err := repo.ReserveStock(ctx, []*entity.ItemWithQuantity{{Id: testItem, Quantity: 1}})
+			err := repo.ReserveStock(ctx, []*entity.ItemWithQuantity{{ID: testItem, Quantity: 1}})
 			return err
 		})
 	}
@@ -112,7 +112,7 @@ func TestStockRepositoryMySQL_ReserveStock_OverSell(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = repo.ReserveStock(ctx, []*entity.ItemWithQuantity{{Id: testItem, Quantity: 1}})
+			_ = repo.ReserveStock(ctx, []*entity.ItemWithQuantity{{ID: testItem, Quantity: 1}})
 		}()
 	}
 	wg.Wait()
@@ -146,8 +146,8 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 				},
 			},
 			toUpdate: []*entity.ItemWithQuantity{
-				{Id: "item-2", Quantity: 2},
-				{Id: "item-1", Quantity: 2},
+				{ID: "item-2", Quantity: 2},
+				{ID: "item-1", Quantity: 2},
 			},
 			expectedReserved: map[string]int64{
 				"item-1": 2,
@@ -170,8 +170,8 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 				},
 			},
 			toUpdate: []*entity.ItemWithQuantity{
-				{Id: "item-2", Quantity: 1000},
-				{Id: "item-1", Quantity: 200000},
+				{ID: "item-2", Quantity: 1000},
+				{ID: "item-1", Quantity: 200000},
 			},
 			expectedReserved: map[string]int64{
 				"item-1": 0,
@@ -194,8 +194,8 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 				},
 			},
 			toUpdate: []*entity.ItemWithQuantity{
-				{Id: "item-2", Quantity: 1000},
-				{Id: "item-1", Quantity: 1},
+				{ID: "item-2", Quantity: 1000},
+				{ID: "item-1", Quantity: 1},
 			},
 			expectedReserved: map[string]int64{
 				"item-1": 0,
@@ -213,8 +213,8 @@ func TestStockRepositoryMySQL_ReserveStock(t *testing.T) {
 				},
 			},
 			toUpdate: []*entity.ItemWithQuantity{
-				{Id: "item-3", Quantity: 1000},
-				{Id: "item-1", Quantity: 1},
+				{ID: "item-3", Quantity: 1000},
+				{ID: "item-1", Quantity: 1},
 			},
 			expectedReserved: map[string]int64{
 				"item-3": 0,
@@ -280,8 +280,8 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 				{ProductID: "item-2", Quantity: 50, Reserved: 5},
 			},
 			toConfirm: []*entity.ItemWithQuantity{
-				{Id: "item-1", Quantity: 5},
-				{Id: "item-2", Quantity: 3},
+				{ID: "item-1", Quantity: 5},
+				{ID: "item-2", Quantity: 3},
 			},
 			expectedQuantity: map[string]int64{
 				"item-1": 95,
@@ -299,7 +299,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 				{ProductID: "item-1", Quantity: 100, Reserved: 3},
 			},
 			toConfirm: []*entity.ItemWithQuantity{
-				{Id: "item-1", Quantity: 5}, // 超卖了
+				{ID: "item-1", Quantity: 5}, // 超卖了
 			},
 			expectedQuantity: map[string]int64{
 				"item-1": 100,
@@ -315,7 +315,7 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 				{ProductID: "item-1", Quantity: 100, Reserved: 10},
 			},
 			toConfirm: []*entity.ItemWithQuantity{
-				{Id: "item-2", Quantity: 5},
+				{ID: "item-2", Quantity: 5},
 			},
 			expectedQuantity: map[string]int64{
 				"item-1": 100,
@@ -333,9 +333,9 @@ func TestStockRepositoryMySQL_ConfirmStockReservation(t *testing.T) {
 				{ProductID: "item-3", Quantity: 30, Reserved: 5},
 			},
 			toConfirm: []*entity.ItemWithQuantity{
-				{Id: "item-1", Quantity: 10},
-				{Id: "item-2", Quantity: 5},
-				{Id: "item-3", Quantity: 2},
+				{ID: "item-1", Quantity: 10},
+				{ID: "item-2", Quantity: 5},
+				{ID: "item-3", Quantity: 2},
 			},
 			expectedQuantity: map[string]int64{
 				"item-1": 100,

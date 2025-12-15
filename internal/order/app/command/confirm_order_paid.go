@@ -63,7 +63,7 @@ func (c confirmOrderPaidHandler) Handle(ctx context.Context, cmd ConfirmOrderPai
 	var itemWithQuantities []*entity.ItemWithQuantity
 	for _, orderItem := range cmd.Order.Items {
 		itemWithQuantities = append(itemWithQuantities, &entity.ItemWithQuantity{
-			Id:       orderItem.Id,
+			ID:       orderItem.ID,
 			Quantity: orderItem.Quantity,
 		})
 	}

@@ -10,25 +10,25 @@ import (
 
 var stub = map[string]*entity.Item{
 	"item_id": {
-		Id:       "foo_item",
+		ID:       "foo_item",
 		Name:     "stub_item",
 		Quantity: 100000000,
 		PriceID:  "price_id",
 	},
 	"item1": {
-		Id:       "item1",
+		ID:       "item1",
 		Name:     "stub item 1",
 		Quantity: 1000000,
 		PriceID:  "stub_item1_price_id",
 	},
 	"item2": {
-		Id:       "item2",
+		ID:       "item2",
 		Name:     "stub item 2",
 		Quantity: 1000000,
 		PriceID:  "stub_item2_price_id",
 	},
 	"item3": {
-		Id:       "item3",
+		ID:       "item3",
 		Name:     "stub item 3",
 		Quantity: 1000000,
 		PriceID:  "stub_item3_price_id",

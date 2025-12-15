@@ -35,7 +35,7 @@ func (s StockRepositoryMySQL) GetStock(ctx context.Context, ids []string) ([]*en
 	var result []*entity.ItemWithQuantity
 	for _, d := range data {
 		result = append(result, &entity.ItemWithQuantity{
-			Id:       d.ProductID,
+			ID:       d.ProductID,
 			Quantity: d.Quantity,
 		})
 	}
@@ -115,7 +115,7 @@ func (s StockRepositoryMySQL) tryReserveStock(
 
 	requiredQuantities := make(map[string]int64)
 	for _, item := range toReserve {
-		requiredQuantities[item.Id] += item.Quantity
+		requiredQuantities[item.ID] += item.Quantity
 	}
 
 	var (
@@ -181,7 +181,7 @@ func (s StockRepositoryMySQL) tryConfirmStockReservation(
 
 	confirmedReservation := make(map[string]int64)
 	for _, item := range toConfirm {
-		confirmedReservation[item.Id] += item.Quantity
+		confirmedReservation[item.ID] += item.Quantity
 	}
 
 	var ()
@@ -217,8 +217,8 @@ func findMissingProductIDs(requested []*entity.ItemWithQuantity, stocks []*persi
 	}
 
 	for _, item := range requested {
-		if _, ok := gotSet[item.Id]; !ok {
-			missingIDs = append(missingIDs, item.Id)
+		if _, ok := gotSet[item.ID]; !ok {
+			missingIDs = append(missingIDs, item.ID)
 		}
 	}
 
@@ -229,7 +229,7 @@ func findMissingProductIDs(requested []*entity.ItemWithQuantity, stocks []*persi
 func getIDsFromItems(items []*entity.ItemWithQuantity) []string {
 	var ids []string
 	for _, item := range items {
-		ids = append(ids, item.Id)
+		ids = append(ids, item.ID)
 	}
 
 	return ids

@@ -134,13 +134,13 @@ func (c createOrderHandler) validate(ctx context.Context, items []*entity.ItemWi
 func packItems(items []*entity.ItemWithQuantity) []*entity.ItemWithQuantity {
 	merged := make(map[string]int64)
 	for _, item := range items {
-		merged[item.Id] += item.Quantity
+		merged[item.ID] += item.Quantity
 	}
 
 	var packed []*entity.ItemWithQuantity
 	for id, quantity := range merged {
 		packed = append(packed, &entity.ItemWithQuantity{
-			Id:       id,
+			ID:       id,
 			Quantity: quantity,
 		})
 	}

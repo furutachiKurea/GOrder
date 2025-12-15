@@ -70,13 +70,13 @@ func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) (
 	// 从 stripe 获取 priceID
 	var res []*entity.Item
 	for _, item := range command.Items {
-		priceID, err := h.priceProvider.GetPriceByProductID(ctx, item.Id)
+		priceID, err := h.priceProvider.GetPriceByProductID(ctx, item.ID)
 		if err != nil || priceID == "" {
 			return nil, err
 		}
 
 		res = append(res, &entity.Item{
-			Id:       item.Id,
+			ID:       item.ID,
 			Quantity: item.Quantity,
 			PriceID:  priceID,
 		})
@@ -102,7 +102,7 @@ func unlock(ctx context.Context, key string) error {
 func getLockKey(items []*entity.ItemWithQuantity) string {
 	var ids []string
 	for _, item := range items {
-		ids = append(ids, item.Id)
+		ids = append(ids, item.ID)
 	}
 
 	return redisLockPrefix + strings.Join(ids, "_")
@@ -112,13 +112,13 @@ func getLockKey(items []*entity.ItemWithQuantity) string {
 func packItems(items []*entity.ItemWithQuantity) []*entity.ItemWithQuantity {
 	merged := make(map[string]int64)
 	for _, item := range items {
-		merged[item.Id] += item.Quantity
+		merged[item.ID] += item.Quantity
 	}
 
 	var packed []*entity.ItemWithQuantity
 	for id, quantity := range merged {
 		packed = append(packed, &entity.ItemWithQuantity{
-			Id:       id,
+			ID:       id,
 			Quantity: quantity,
 		})
 	}
