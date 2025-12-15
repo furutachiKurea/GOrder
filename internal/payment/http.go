@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/furutachiKurea/gorder/common/broker"
+	"github.com/furutachiKurea/gorder/common/consts"
 	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/gin-gonic/gin"
@@ -93,7 +94,7 @@ func (h PaymentHandler) handleWebhook(c *gin.Context) {
 				Body: &entity.Order{
 					ID:         session.Metadata["order_id"],
 					CustomerID: session.Metadata["customer_id"],
-					Status:     string(session.PaymentStatus),
+					Status:     consts.OrderStatusPaid,
 					Items:      items,
 				},
 			})

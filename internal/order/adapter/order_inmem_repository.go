@@ -6,12 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/furutachiKurea/gorder/common/entity"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 	"github.com/rs/zerolog/log"
 )
 
-var stub = []*entity.Order{
+var stub = []*domain.Order{
 	{
 		ID:          "fake-ID",
 		CustomerID:  "fake-customer-id",
@@ -23,7 +22,7 @@ var stub = []*entity.Order{
 
 type MemoryOrderRepository struct {
 	lock  *sync.RWMutex
-	store []*entity.Order
+	store []*domain.Order
 }
 
 func NewMemoryOrderRepository() *MemoryOrderRepository {
@@ -33,11 +32,11 @@ func NewMemoryOrderRepository() *MemoryOrderRepository {
 	}
 }
 
-func (m *MemoryOrderRepository) Create(_ context.Context, order *entity.Order) (*entity.Order, error) {
+func (m *MemoryOrderRepository) Create(_ context.Context, order *domain.Order) (*domain.Order, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
-	newOrder := &entity.Order{
+	newOrder := &domain.Order{
 		ID:          strconv.FormatInt(time.Now().UnixNano(), 10),
 		CustomerID:  order.CustomerID,
 		Status:      order.Status,
@@ -49,7 +48,7 @@ func (m *MemoryOrderRepository) Create(_ context.Context, order *entity.Order) (
 
 	// Debug 转换 store 内容为值类型切片
 	if log.Debug().Enabled() {
-		storeValues := make([]entity.Order, len(m.store))
+		storeValues := make([]domain.Order, len(m.store))
 		for i, o := range m.store {
 			storeValues[i] = *o
 		}
@@ -69,7 +68,7 @@ func (m *MemoryOrderRepository) Create(_ context.Context, order *entity.Order) (
 	*/
 }
 
-func (m *MemoryOrderRepository) Get(_ context.Context, orderID, customerID string) (*entity.Order, error) {
+func (m *MemoryOrderRepository) Get(_ context.Context, orderID, customerID string) (*domain.Order, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
@@ -83,7 +82,7 @@ func (m *MemoryOrderRepository) Get(_ context.Context, orderID, customerID strin
 	return nil, domain.NotFoundError{OrderID: orderID}
 }
 
-func (m *MemoryOrderRepository) Update(ctx context.Context, updates *entity.Order) error {
+func (m *MemoryOrderRepository) Update(ctx context.Context, updates *domain.Order) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 

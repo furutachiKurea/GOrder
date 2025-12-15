@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	_ "github.com/furutachiKurea/gorder/common/config"
+	"github.com/furutachiKurea/gorder/common/consts"
 	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
@@ -140,7 +141,7 @@ func (r *OrderRepositoryMongo) domainToMongo(order *domain.Order) *orderModel {
 		MongoID:     primitive.NewObjectID(),
 		ID:          order.ID,
 		CustomerID:  order.CustomerID,
-		Status:      order.Status,
+		Status:      string(order.Status),
 		PaymentLink: order.PaymentLink,
 		Items:       order.Items,
 	}
@@ -150,7 +151,7 @@ func (r *OrderRepositoryMongo) unmarshal(m *orderModel) *domain.Order {
 	return &domain.Order{
 		ID:          m.MongoID.Hex(),
 		CustomerID:  m.CustomerID,
-		Status:      m.Status,
+		Status:      consts.OrderStatus(m.Status),
 		PaymentLink: m.PaymentLink,
 		Items:       m.Items,
 	}
@@ -159,6 +160,7 @@ func (r *OrderRepositoryMongo) unmarshal(m *orderModel) *domain.Order {
 // updateOrder 根据 old order 和 updates 生成新的 order
 //
 // PaymentLink 始终使用 updates 的值，使得在支付完成之后 PaymentLink 会被置空
+// TODO 更新逻辑应当收敛到 domain 层
 func (r *OrderRepositoryMongo) updateOrder(old *domain.Order, updates *domain.Order) *domain.Order {
 	res := &domain.Order{
 		ID:          old.ID,
@@ -169,7 +171,7 @@ func (r *OrderRepositoryMongo) updateOrder(old *domain.Order, updates *domain.Or
 	}
 
 	if updates.Status != "" && updates.Status != old.Status {
-		res.UpdatesStatus(updates.Status)
+		res.UpdateStatusTo(updates.Status) // TODO
 	}
 
 	return res

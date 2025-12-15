@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	oapi "github.com/furutachiKurea/gorder/common/client/order"
+	"github.com/furutachiKurea/gorder/common/consts"
 	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 )
@@ -17,7 +18,7 @@ func (c *OrderConvertor) EntityToProto(o *entity.Order) *orderpb.Order {
 	return &orderpb.Order{
 		Id:          o.ID,
 		CustomerId:  o.CustomerID,
-		Status:      o.Status,
+		Status:      string(o.Status),
 		PaymentLink: o.PaymentLink,
 		Items:       NewItemConvertor().EntitiesToProtos(o.Items),
 	}
@@ -28,7 +29,7 @@ func (c *OrderConvertor) ProtoToEntity(pb *orderpb.Order) *entity.Order {
 	return &entity.Order{
 		ID:          pb.Id,
 		CustomerID:  pb.CustomerId,
-		Status:      pb.Status,
+		Status:      consts.OrderStatus(pb.Status),
 		PaymentLink: pb.PaymentLink,
 		Items:       NewItemConvertor().ProtosToEntities(pb.Items),
 	}
@@ -39,7 +40,7 @@ func (c *OrderConvertor) EntityToOAPI(o *entity.Order) *oapi.Order {
 	return &oapi.Order{
 		Id:          o.ID,
 		CustomerId:  o.CustomerID,
-		Status:      o.Status,
+		Status:      string(o.Status),
 		PaymentLink: o.PaymentLink,
 		Items:       NewItemConvertor().EntitiesToOAPIs(o.Items),
 	}
@@ -49,7 +50,7 @@ func (c *OrderConvertor) OAPIToEntity(oapi oapi.Order) *entity.Order {
 	return &entity.Order{
 		ID:          oapi.Id,
 		CustomerID:  oapi.CustomerId,
-		Status:      oapi.Status,
+		Status:      consts.OrderStatus(oapi.Status),
 		PaymentLink: oapi.PaymentLink,
 		Items:       NewItemConvertor().OAPIsToEntities(oapi.Items),
 	}

@@ -81,7 +81,7 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 			Id:          order.ID,
 			Items:       convertor.NewItemConvertor().EntitiesToOAPIs(order.Items),
 			PaymentLink: order.PaymentLink,
-			Status:      order.Status,
+			Status:      string(order.Status),
 		},
 	}
 }

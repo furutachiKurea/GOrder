@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 
+	"github.com/furutachiKurea/gorder/common/consts"
 	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/decorator"
 	"github.com/furutachiKurea/gorder/common/entity"
@@ -71,7 +72,7 @@ func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (st
 	newOrder := &orderpb.Order{
 		Id:          cmd.Order.ID,
 		CustomerId:  cmd.Order.CustomerID,
-		Status:      "waiting_for_payment",
+		Status:      string(consts.OrderStatusWaitingForPayment),
 		Items:       convertor.NewItemConvertor().EntitiesToProtos(cmd.Order.Items),
 		PaymentLink: link,
 	}

@@ -41,7 +41,7 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *entity.Or
 	metadata := map[string]string{
 		"order_id":    order.ID,
 		"customer_id": order.CustomerID,
-		"status":      order.Status,
+		"status":      string(order.Status),
 		"items":       string(marshalledItems),
 	}
 

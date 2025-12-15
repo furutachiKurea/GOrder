@@ -3,6 +3,7 @@ package ports
 import (
 	"context"
 
+	"github.com/furutachiKurea/gorder/common/consts"
 	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
 	"github.com/furutachiKurea/gorder/order/app"
@@ -48,7 +49,7 @@ func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderReque
 	return &orderpb.Order{
 		Id:          order.ID,
 		CustomerId:  order.CustomerID,
-		Status:      order.Status,
+		Status:      string(order.Status),
 		PaymentLink: order.PaymentLink,
 		Items:       convertor.NewItemConvertor().EntitiesToProtos(order.Items),
 	}, nil
@@ -59,8 +60,8 @@ func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (*e
 	newOrder, err := domain.NewOrder(
 		request.Id,
 		request.CustomerId,
-		request.Status,
 		request.PaymentLink,
+		consts.OrderStatus(request.Status),
 		convertor.NewItemConvertor().ProtosToEntities(request.Items))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

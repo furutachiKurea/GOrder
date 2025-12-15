@@ -3,6 +3,8 @@ package entity
 import (
 	"fmt"
 	"strings"
+
+	"github.com/furutachiKurea/gorder/common/consts"
 )
 
 type Item struct {
@@ -78,7 +80,7 @@ func (i ItemWithQuantity) validate() error {
 type Order struct {
 	ID          string
 	CustomerID  string
-	Status      string
+	Status      consts.OrderStatus
 	PaymentLink string
 	Items       []*Item
 }

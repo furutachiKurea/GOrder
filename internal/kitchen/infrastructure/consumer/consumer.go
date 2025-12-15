@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/furutachiKurea/gorder/common/broker"
+	"github.com/furutachiKurea/gorder/common/consts"
 	"github.com/furutachiKurea/gorder/common/convertor"
 	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/genproto/orderpb"
@@ -84,7 +85,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		return
 	}
 
-	if o.Status != "paid" {
+	if o.Status != consts.OrderStatusPaid {
 		err = errors.New("order not paid, cannot cook")
 		return
 	}
@@ -94,7 +95,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	if err = c.orderGRPC.UpdateOrder(ctx, &orderpb.Order{
 		Id:          o.ID,
 		CustomerId:  o.CustomerID,
-		Status:      "ready",
+		Status:      string(consts.OrderStatusReady),
 		PaymentLink: o.PaymentLink,
 		Items:       convertor.NewItemConvertor().EntitiesToProtos(o.Items),
 	}); err != nil {
