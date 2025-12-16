@@ -48,7 +48,11 @@ func NewApplication(ctx context.Context) (app app.Application, close func()) {
 func newApplication(_ context.Context, stockClient client.StockService, mongoClient *mongo.Client, ch *amqp.Channel) app.Application {
 	orderRepo := adapter.NewOrderRepositoryMongo(mongoClient)
 	logger := log.Logger
-	metricsClient := metrics.TodoMetrics{}
+	metricsClient := metrics.NewPrometheusMetricsClient(
+		&metrics.PrometheusMetricsClientConfig{
+			Host:        viper.GetString("order.metrics-export-addr"),
+			ServiceName: viper.GetString("order.service-name"),
+		})
 	return app.Application{
 		Commands: app.Commands{
 			CreateOrder: command.NewCreateOrderHandler(

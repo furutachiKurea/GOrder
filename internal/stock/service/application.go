@@ -10,6 +10,7 @@ import (
 	"github.com/furutachiKurea/gorder/stock/app/query"
 	"github.com/furutachiKurea/gorder/stock/infrastructure/integration"
 	"github.com/furutachiKurea/gorder/stock/infrastructure/persistent"
+	"github.com/spf13/viper"
 
 	"github.com/rs/zerolog/log"
 )
@@ -19,7 +20,11 @@ func NewApplication(_ context.Context) app.Application {
 	stockRepo := adapter.NewStockRepositoryMySQL(db)
 	stripeAPI := integration.NewStripeAPI()
 	logger := log.Logger
-	metricsClient := metrics.TodoMetrics{}
+	metricsClient := metrics.NewPrometheusMetricsClient(
+		&metrics.PrometheusMetricsClientConfig{
+			Host:        viper.GetString("stock.metrics-export-addr"),
+			ServiceName: viper.GetString("stock.service-name"),
+		})
 	return app.Application{
 		Commands: app.Commands{
 			ReserveStock: command.NewReserveStockHandler(

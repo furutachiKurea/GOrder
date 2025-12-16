@@ -10,6 +10,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// TODO 持久化日志, 日志流转
+
 func Init() {
 	zerolog.ErrorFieldName = "err"
 
@@ -23,7 +25,13 @@ func Init() {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
-	log.Logger = log.Hook(traceHook{})
+	registerHook(traceHook{})
+}
+
+func registerHook(hooks ...zerolog.Hook) {
+	for _, hook := range hooks {
+		log.Logger = log.Logger.Hook(hook)
+	}
 }
 
 type traceHook struct {

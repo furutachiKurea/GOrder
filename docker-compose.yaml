@@ -55,6 +55,8 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   grafana:
       image: grafana/grafana
