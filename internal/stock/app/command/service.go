@@ -1,7 +1,11 @@
 package command
 
-import "context"
+import (
+	"context"
 
-type PriceProvider interface {
-	GetPriceByProductID(context.Context, string) (string, error)
+	"github.com/furutachiKurea/gorder/stock/app/dto"
+)
+
+type ProductProvider interface {
+	GetProductByID(ctx context.Context, pid string) (*dto.Product, error)
 }

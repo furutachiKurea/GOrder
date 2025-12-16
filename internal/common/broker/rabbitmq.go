@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -107,12 +108,17 @@ func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) (err 
 
 	if retryCount > maxRetryCount {
 		log.Info().Ctx(ctx).Str("message_id", d.MessageId).Msg("moving message to dlq")
-		return doPublish(ctx, ch, "", DLQ, false, false, amqp.Publishing{
+		err = doPublish(ctx, ch, "", DLQ, false, false, amqp.Publishing{
 			Headers:      d.Headers,
 			ContentType:  "application/json",
 			Body:         d.Body,
 			DeliveryMode: amqp.Persistent,
 		})
+		if err != nil {
+			err = fmt.Errorf("publish to dlq: %w", err)
+			return err
+		}
+		return errors.New("max retry count exceeded, message moved to dlq")
 	}
 
 	log.Debug().Ctx(ctx).Str("message_id", d.MessageId).Int64("retry_count", retryCount).Msg("retrying message")

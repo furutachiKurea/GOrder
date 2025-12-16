@@ -8,6 +8,7 @@ import (
 	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/logging"
 	domain "github.com/furutachiKurea/gorder/stock/domain/stock"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )

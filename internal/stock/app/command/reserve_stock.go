@@ -28,12 +28,12 @@ type ReserveStockHandler decorator.CommandHandler[ReserveStock, []*entity.Item]
 
 type reserveStockHandler struct {
 	stockRepo     domain.Repository
-	priceProvider PriceProvider
+	priceProvider ProductProvider
 }
 
 func NewReserveStockHandler(
 	stockRepo domain.Repository,
-	priceProvider PriceProvider,
+	priceProvider ProductProvider,
 	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
 ) ReserveStockHandler {
@@ -70,16 +70,15 @@ func (h reserveStockHandler) Handle(ctx context.Context, command ReserveStock) (
 	// 从 stripe 获取 priceID
 	var res []*entity.Item
 	for _, item := range command.Items {
-		priceID, err := h.priceProvider.GetPriceByProductID(ctx, item.ID)
-		if err != nil || priceID == "" {
+		p, err := h.priceProvider.GetProductByID(ctx, item.ID)
+		if err != nil {
 			return nil, err
 		}
-
-		res = append(res, &entity.Item{
-			ID:       item.ID,
-			Quantity: item.Quantity,
-			PriceID:  priceID,
-		})
+		valid, err := entity.NewValidItem(item.ID, p.Name, item.Quantity, p.PriceID)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, valid)
 	}
 
 	// 预扣库存

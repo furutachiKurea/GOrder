@@ -106,22 +106,25 @@ func (r *OrderRepositoryMongo) Update(ctx context.Context, updates *domain.Order
 	}()
 
 	// transaction in (end at defer)
-	oldOrder, err := r.Get(ctx, updates.ID, updates.CustomerID)
+	order, err := r.Get(ctx, updates.ID, updates.CustomerID)
 	if err != nil {
 		return
 	}
 
-	updated := r.updateOrder(oldOrder, updates)
-	log.Debug().Any("order_update_to", updated).Msg("")
+	err = order.UpdateTo(updates)
+	if err != nil {
+		return err
+	}
+	log.Debug().Any("order_update_to", order).Msg("")
 
-	mongoID, _ := primitive.ObjectIDFromHex(oldOrder.ID)
+	mongoID, _ := primitive.ObjectIDFromHex(order.ID)
 	_, err = r.collection().UpdateOne(
 		ctx,
 		bson.M{"_id": mongoID},
 		bson.M{"$set": bson.M{
 			"id":           mongoID,
-			"status":       updated.Status,
-			"payment_link": updated.PaymentLink,
+			"status":       order.Status,
+			"payment_link": order.PaymentLink,
 		}},
 	)
 	if err != nil {
@@ -155,26 +158,6 @@ func (r *OrderRepositoryMongo) unmarshal(m *orderModel) *domain.Order {
 		PaymentLink: m.PaymentLink,
 		Items:       m.Items,
 	}
-}
-
-// updateOrder 根据 old order 和 updates 生成新的 order
-//
-// PaymentLink 始终使用 updates 的值，使得在支付完成之后 PaymentLink 会被置空
-// TODO 更新逻辑应当收敛到 domain 层
-func (r *OrderRepositoryMongo) updateOrder(old *domain.Order, updates *domain.Order) *domain.Order {
-	res := &domain.Order{
-		ID:          old.ID,
-		CustomerID:  old.CustomerID,
-		Status:      old.Status,
-		PaymentLink: updates.PaymentLink,
-		Items:       old.Items,
-	}
-
-	if updates.Status != "" && updates.Status != old.Status {
-		res.UpdateStatusTo(updates.Status) // TODO
-	}
-
-	return res
 }
 
 // orderModel MongoDB 的订单模型

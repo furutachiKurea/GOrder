@@ -83,8 +83,29 @@ func NewPendingOrder(customerID string, items []*entity.Item) (*Order, error) {
 	}, nil
 }
 
+// UpdateTo 使用 order 的值更新 o, ID, CustomerID, Items 不可变
+func (o *Order) UpdateTo(order *Order) (err error) {
+	if order.Status != "" {
+		err = o.UpdateStatusTo(order.Status)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = o.UpdatePaymentLink(order.PaymentLink)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateStatusTo 更新订单状态
 func (o *Order) UpdateStatusTo(status consts.OrderStatus) error {
+	if status == "" {
+		return errors.New("order status cannot be empty")
+	}
+
 	notAllowedTrans := map[consts.OrderStatus][]consts.OrderStatus{
 		consts.OrderStatusPending:           {},
 		consts.OrderStatusWaitingForPayment: {consts.OrderStatusPending},
@@ -92,14 +113,14 @@ func (o *Order) UpdateStatusTo(status consts.OrderStatus) error {
 		consts.OrderStatusReady:             {consts.OrderStatusPending, consts.OrderStatusWaitingForPayment, consts.OrderStatusPaid},
 	}
 
-	notAllows, ok := notAllowedTrans[o.Status]
+	invalidStatus, ok := notAllowedTrans[o.Status]
 	if !ok {
 		// 应该不会发生
 		log.Warn().Str("order_id", o.ID).Str("unknow_status", string(o.Status)).Msg("current order status is unknown")
 		return fmt.Errorf("unknown current order status, order_id=%s, status=%s", o.ID, o.Status)
 	}
 
-	for _, notAllow := range notAllows {
+	for _, notAllow := range invalidStatus {
 		if status == notAllow {
 			log.Warn().
 				Str("order_id", o.ID).
@@ -112,6 +133,20 @@ func (o *Order) UpdateStatusTo(status consts.OrderStatus) error {
 	}
 
 	o.Status = status
+	return nil
+}
+
+// UpdatePaymentLink 更新订单的支付链接，
+func (o *Order) UpdatePaymentLink(paymentLink string) error {
+	// 由于 domain.Repository 现在的设计会将传入的 updates 全盘更新给 order，
+	// 这导致 UpdatesPaymentLink 会在传入的 order PaymentLink 为空时将原有的 PaymentLink 覆盖掉，
+	// 这个情况会在支付完成后恰好被触发，我们暂且认为支付完成后移除 PaymentLink 是合理的，
+	// 因此这里注释掉这个检查 💩
+	// if paymentLink == "" {
+	// 	return nil
+	// }
+
+	o.PaymentLink = paymentLink
 	return nil
 }
 

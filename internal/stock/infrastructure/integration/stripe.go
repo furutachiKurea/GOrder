@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_ "github.com/furutachiKurea/gorder/common/config"
-
+	"github.com/furutachiKurea/gorder/stock/app/dto"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v84"
@@ -25,13 +25,15 @@ func NewStripeAPI() *StripeAPI {
 	}
 }
 
-func (s *StripeAPI) GetPriceByProductID(_ context.Context, pid string) (string, error) {
+func (s *StripeAPI) GetProductByID(_ context.Context, pid string) (*dto.Product, error) {
 	stripe.Key = s.apiKey
-
-	result, err := product.Get(pid, &stripe.ProductParams{})
+	got, err := product.Get(pid, &stripe.ProductParams{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return result.DefaultPrice.ID, nil
+	return &dto.Product{
+		PriceID: got.DefaultPrice.ID,
+		Name:    got.Name,
+	}, nil
 }
