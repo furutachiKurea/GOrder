@@ -53,12 +53,16 @@ func newApplication(_ context.Context, stockClient client.StockService, mongoCli
 			Host:        viper.GetString("order.metrics-export-addr"),
 			ServiceName: viper.GetString("order.service-name"),
 		})
+
+	// 创建线程安全的 SafeChannel 包装器
+	safeCh := broker.NewSafeChannel(ch)
+
 	return app.Application{
 		Commands: app.Commands{
 			CreateOrder: command.NewCreateOrderHandler(
 				orderRepo,
 				stockClient,
-				ch,
+				safeCh,
 				logger,
 				metricsClient,
 			),

@@ -50,7 +50,9 @@ func main() {
 
 	go consumer.NewConsumer(app).Listen(ch)
 
-	paymentHandler := NewPaymentHandler(ch)
+	// 创建线程安全的 SafeChannel 包装器
+	safeCh := broker.NewSafeChannel(ch)
+	paymentHandler := NewPaymentHandler(safeCh)
 
 	switch serverType {
 	case "grpc":

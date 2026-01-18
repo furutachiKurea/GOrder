@@ -13,7 +13,6 @@ import (
 	"github.com/furutachiKurea/gorder/order/app/client"
 	domain "github.com/furutachiKurea/gorder/order/domain/order"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -35,13 +34,13 @@ type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult
 type createOrderHandler struct {
 	orderRepo domain.Repository
 	stockGRPC client.StockService
-	channel   *amqp.Channel
+	channel   *broker.SafeChannel
 }
 
 func NewCreateOrderHandler(
 	orderRepo domain.Repository,
 	stockGRPC client.StockService,
-	channel *amqp.Channel,
+	channel *broker.SafeChannel,
 	logger zerolog.Logger,
 	metricsClient decorator.MetricsClient,
 ) CreateOrderHandler {
@@ -72,7 +71,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	defer logging.WhenCommandExecute(ctx, "CreateOrderHandler", cmd, err)
 
 	t := otel.Tracer("rabbitmq")
-	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
+	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderCreated))
 	defer span.End()
 
 	validItems, err := c.validate(ctx, cmd.Items)

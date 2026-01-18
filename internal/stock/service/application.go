@@ -18,7 +18,8 @@ import (
 func NewApplication(_ context.Context) app.Application {
 	db := persistent.NewMySQL()
 	stockRepo := adapter.NewStockRepositoryMySQL(db)
-	stripeAPI := integration.NewStripeAPI()
+	// stripeAPI := integration.NewStripeAPI()
+	stripeAPI := integration.NewMockStripeAPI()
 	logger := log.Logger
 	metricsClient := metrics.NewPrometheusMetricsClient(
 		&metrics.PrometheusMetricsClientConfig{

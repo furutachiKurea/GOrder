@@ -108,7 +108,7 @@ func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) (err 
 
 	if retryCount > maxRetryCount {
 		log.Info().Ctx(ctx).Str("message_id", d.MessageId).Msg("moving message to dlq")
-		err = doPublish(ctx, ch, "", DLQ, false, false, amqp.Publishing{
+		err = ch.PublishWithContext(ctx, "", DLQ, false, false, amqp.Publishing{
 			Headers:      d.Headers,
 			ContentType:  "application/json",
 			Body:         d.Body,
@@ -123,12 +123,16 @@ func HandlerRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) (err 
 
 	log.Debug().Ctx(ctx).Str("message_id", d.MessageId).Int64("retry_count", retryCount).Msg("retrying message")
 	time.Sleep(time.Second * time.Duration(retryCount))
-	return doPublish(ctx, ch, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
+	err = ch.PublishWithContext(ctx, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
 		Headers:      d.Headers,
 		ContentType:  "application/json",
 		Body:         d.Body,
 		DeliveryMode: amqp.Persistent,
 	})
+	if err != nil {
+		return fmt.Errorf("publish event: %w", err)
+	}
+	return nil
 }
 
 type RabbitMQHeaderCarrier map[string]any

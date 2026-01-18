@@ -13,7 +13,6 @@ import (
 	"github.com/furutachiKurea/gorder/common/entity"
 	"github.com/furutachiKurea/gorder/common/tracing"
 	"github.com/gin-gonic/gin"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v84"
@@ -21,10 +20,10 @@ import (
 )
 
 type PaymentHandler struct {
-	channel *amqp.Channel
+	channel *broker.SafeChannel
 }
 
-func NewPaymentHandler(ch *amqp.Channel) *PaymentHandler {
+func NewPaymentHandler(ch *broker.SafeChannel) *PaymentHandler {
 	return &PaymentHandler{channel: ch}
 }
 

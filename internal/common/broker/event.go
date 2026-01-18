@@ -24,7 +24,7 @@ const (
 )
 
 type PublishEventReq struct {
-	Channel  *amqp.Channel
+	Channel  *SafeChannel
 	Routing  RoutingType
 	Queue    string
 	Exchange string
@@ -87,7 +87,7 @@ func fanOutQueue(ctx context.Context, req *PublishEventReq) error {
 // doPublish -
 func doPublish(
 	ctx context.Context,
-	ch *amqp.Channel,
+	ch *SafeChannel,
 	exchange, key string,
 	mandatory, immediate bool,
 	msg amqp.Publishing,
